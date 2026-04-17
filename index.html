@@ -1,0 +1,1790 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#c8762a">
+<title>Ferme Enzo — Gestion de la Porcherie</title>
+<style>
+/* ── RESET & BASE ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:15px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+img{max-width:100%;display:block}
+
+/* ── CSS VARS ── */
+:root{
+  --bg:#faf8f5;--bg2:#f2ede5;--bg3:#ffffff;
+  --text:#1a1208;--text2:#6b5e4a;--text3:#9c8a72;
+  --border:rgba(100,80,40,.15);--border2:rgba(100,80,40,.28);
+  --accent:#c8762a;--accent-dark:#a85e1e;--accent-light:#f5e6d3;
+  --success-bg:#eaf5e8;--success:#2d7a2d;
+  --warn-bg:#fef3e0;--warn:#a06000;
+  --danger-bg:#fdeaea;--danger:#b52a2a;
+  --info-bg:#e6f0fb;--info:#1a5fa8;
+  --r:8px;--rl:12px;
+  --topbar-h:56px;--bottomnav-h:60px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+/* Thème sombre : activé par la classe .dark sur <html> OU via prefers-color-scheme */
+@media(prefers-color-scheme:dark){
+  html:not(.theme-light){
+    --bg:#1a1510;--bg2:#251e16;--bg3:#2e2519;
+    --text:#f0e8d8;--text2:#b09878;--text3:#7a6a54;
+    --border:rgba(200,160,80,.12);--border2:rgba(200,160,80,.22);
+    --accent-light:#3a2010;
+    --success-bg:#0d2a0d;--success:#5cc85c;
+    --warn-bg:#2a1a00;--warn:#f0a020;
+    --danger-bg:#2a0d0d;--danger:#e06060;
+    --info-bg:#0d1e38;--info:#5090e0;
+  }
+}
+html.theme-dark{
+  --bg:#1a1510;--bg2:#251e16;--bg3:#2e2519;
+  --text:#f0e8d8;--text2:#b09878;--text3:#7a6a54;
+  --border:rgba(200,160,80,.12);--border2:rgba(200,160,80,.22);
+  --accent-light:#3a2010;
+  --success-bg:#0d2a0d;--success:#5cc85c;
+  --warn-bg:#2a1a00;--warn:#f0a020;
+  --danger-bg:#2a0d0d;--danger:#e06060;
+  --info-bg:#0d1e38;--info:#5090e0;
+}
+html.theme-light{
+  --bg:#faf8f5;--bg2:#f2ede5;--bg3:#ffffff;
+  --text:#1a1208;--text2:#6b5e4a;--text3:#9c8a72;
+  --border:rgba(100,80,40,.15);--border2:rgba(100,80,40,.28);
+  --accent-light:#f5e6d3;
+  --success-bg:#eaf5e8;--success:#2d7a2d;
+  --warn-bg:#fef3e0;--warn:#a06000;
+  --danger-bg:#fdeaea;--danger:#b52a2a;
+  --info-bg:#e6f0fb;--info:#1a5fa8;
+}
+/* Bouton toggle thème */
+.theme-toggle{
+  width:36px;height:36px;border-radius:var(--r);border:0.5px solid var(--border2);
+  background:var(--bg2);cursor:pointer;font-size:16px;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;transition:background .15s;
+}
+.theme-toggle:hover{background:var(--accent-light);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* ── LOGIN ── */
+.login-screen{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:var(--bg2);padding:16px}
+.login-box{background:var(--bg3);border:0.5px solid var(--border2);border-radius:var(--rl);padding:32px 28px;width:100%;max-width:380px}
+.login-logo{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:6px}
+.login-logo .ico{font-size:30px}
+.login-title{font-size:18px;font-weight:700;color:var(--text);text-align:center}
+.login-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:24px;margin-top:4px}
+.login-error{background:var(--danger-bg);color:var(--danger);border-radius:var(--r);padding:8px 12px;font-size:13px;margin-bottom:14px;display:none}
+.login-hint{margin-top:14px;font-size:12px;color:var(--text3);text-align:center;padding:10px;background:var(--bg2);border-radius:var(--r)}
+
+/* ── APP SHELL ── */
+.app-shell{display:none;flex-direction:column;min-height:100vh;min-height:100dvh}
+.app-shell.visible{display:flex}
+
+/* ── TOPBAR (desktop + tablet) ── */
+.topbar{display:flex;align-items:center;padding:0 16px;height:var(--topbar-h);background:var(--bg3);border-bottom:0.5px solid var(--border2);position:sticky;top:0;z-index:100;gap:8px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:var(--text);flex-shrink:0;line-height:1.2;white-space:nowrap}
+.logo .ico{font-size:22px;flex-shrink:0}
+.logo-text span{display:block}
+.logo-text .brand{font-size:14px;font-weight:700}
+.logo-text .sub{font-size:10px;font-weight:400;color:var(--text3)}
+
+/* Desktop nav */
+.desktop-nav{display:flex;gap:2px;flex-wrap:wrap;flex:1;overflow:hidden}
+.nav-btn{padding:6px 10px;border-radius:var(--r);border:none;background:transparent;cursor:pointer;font-size:12.5px;color:var(--text2);transition:all .15s;white-space:nowrap;-webkit-appearance:none}
+.nav-btn:hover:not(:disabled){background:var(--bg2);color:var(--text)}
+.nav-btn.active{background:var(--accent-light);color:var(--accent);font-weight:600}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* Hamburger (mobile) */
+.hamburger{display:none;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:40px;height:40px;background:transparent;border:none;cursor:pointer;border-radius:var(--r);flex-shrink:0}
+.hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all .2s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* Mobile drawer */
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:150}
+.drawer-overlay.open{display:block}
+.drawer{position:fixed;top:0;left:-280px;width:280px;height:100%;height:100dvh;background:var(--bg3);z-index:160;transition:left .25s ease;overflow-y:auto;padding-bottom:var(--safe-bottom)}
+.drawer.open{left:0}
+.drawer-header{display:flex;align-items:center;gap:10px;padding:20px 16px 16px;border-bottom:0.5px solid var(--border)}
+.drawer-header .ico{font-size:26px}
+.drawer-header .brand{font-size:14px;font-weight:700;color:var(--text);line-height:1.2}
+.drawer-header .sub{font-size:11px;color:var(--text3)}
+.drawer-nav{padding:8px 0}
+.drawer-btn{display:flex;align-items:center;gap:10px;width:100%;padding:13px 18px;background:transparent;border:none;cursor:pointer;font-size:14px;color:var(--text2);text-align:left;transition:background .15s}
+.drawer-btn:hover:not(:disabled){background:var(--bg2);color:var(--text)}
+.drawer-btn.active{background:var(--accent-light);color:var(--accent);font-weight:600}
+.drawer-btn:disabled{opacity:.3;cursor:not-allowed}
+.drawer-btn .dicon{font-size:18px;width:24px;text-align:center}
+.drawer-user{padding:14px 16px;border-top:0.5px solid var(--border);margin-top:auto}
+
+/* Topbar right */
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.user-pill{display:flex;align-items:center;gap:7px}
+.user-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.uname{font-size:12px;font-weight:600;white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis}
+.urole{font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;display:inline-block;white-space:nowrap}
+
+/* ── MAIN CONTENT ── */
+.main-content{flex:1;overflow-y:auto;padding-bottom:calc(var(--bottomnav-h) + var(--safe-bottom))}
+@media(min-width:769px){.main-content{padding-bottom:20px}}
+
+/* ── PAGES ── */
+.page{display:none;padding:16px;max-width:1200px;margin:0 auto}
+.page.active{display:block}
+
+/* ── GRIDS ── */
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:768px){
+  .grid-4{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:repeat(2,1fr)}
+  .grid-2{grid-template-columns:1fr}
+}
+@media(max-width:400px){
+  .grid-4,.grid-3{grid-template-columns:1fr 1fr}
+}
+
+/* ── METRIC CARDS ── */
+.metric{background:var(--bg2);border-radius:var(--r);padding:12px 14px}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:3px}
+.metric-value{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ── CARDS ── */
+.card{background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--rl);padding:14px;margin-bottom:14px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg3);cursor:pointer;font-size:13px;color:var(--text);transition:all .15s;-webkit-appearance:none;touch-action:manipulation;min-height:36px}
+.btn:active{transform:scale(.97)}
+.btn:hover{background:var(--bg2)}
+.btn-accent{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.btn-accent:hover{background:var(--accent-dark)}
+.btn-sm{padding:5px 10px;font-size:12px;min-height:30px}
+.btn-danger{color:var(--danger)}
+.btn-danger:hover{background:var(--danger-bg)}
+.btn-full{width:100%;justify-content:center;display:flex}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-weight:600;color:var(--text3);text-align:left;padding:8px 10px;border-bottom:0.5px solid var(--border);font-size:11px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+td{padding:10px 10px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:var(--success-bg);color:var(--success)}
+.badge-amber{background:var(--warn-bg);color:var(--warn)}
+.badge-red{background:var(--danger-bg);color:var(--danger)}
+.badge-blue{background:var(--info-bg);color:var(--info)}
+.badge-gray{background:var(--bg2);color:var(--text2)}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:13px}
+.form-label{display:block;font-size:12px;color:var(--text3);margin-bottom:5px;font-weight:600;letter-spacing:.02em}
+input,select,textarea{width:100%;padding:9px 11px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none;appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239c8a72' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(200,118,42,.18)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.form-row{grid-template-columns:1fr}}
+
+/* ── MODALS ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:300}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg3);border-radius:var(--rl) var(--rl) 0 0;border-top:0.5px solid var(--border2);padding:20px 18px;width:100%;max-height:90vh;max-height:90dvh;overflow-y:auto;padding-bottom:calc(20px + var(--safe-bottom));animation:slideUp .22s ease}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media(min-width:600px){
+  .modal-overlay{align-items:center}
+  .modal{border-radius:var(--rl);border:0.5px solid var(--border2);max-width:540px;padding-bottom:20px;animation:fadeIn .18s ease}
+}
+@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.modal-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 16px;display:block}
+@media(min-width:600px){.modal-handle{display:none}}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;border-top:0.5px solid var(--border);padding-top:14px}
+@media(max-width:480px){.modal-footer{flex-direction:column-reverse}.modal-footer .btn{width:100%;justify-content:center}}
+
+/* ── MISC ── */
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pig-row{display:flex;align-items:center;gap:10px}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.filter-bar input,.filter-bar select{width:auto;flex:1;min-width:120px;max-width:200px}
+.empty-state{text-align:center;padding:28px 16px;color:var(--text3);font-size:14px}
+.progress-bar{height:6px;border-radius:3px;background:var(--bg2);overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--accent)}
+.timeline-item{display:flex;gap:10px;padding:9px 0;border-bottom:0.5px solid var(--border);font-size:13px;align-items:center}
+.timeline-item:last-child{border-bottom:none}
+.health-event{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.health-event:last-child{border-bottom:none}
+.health-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.section-title{font-size:11px;font-weight:700;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em}
+.stat-table td:first-child{color:var(--text2)}
+.stat-table td:last-child{text-align:right;font-weight:600}
+.chart-wrap{position:relative;width:100%}
+.access-denied{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text3);text-align:center}
+.access-denied .lock{font-size:44px;margin-bottom:12px}
+
+/* ── PERMISSIONS TABLE ── */
+.perm-table{width:100%;border-collapse:collapse;font-size:12px;border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.perm-table th{background:var(--bg2);font-size:10px;font-weight:700;color:var(--text3);text-align:center;padding:7px 4px;text-transform:uppercase;letter-spacing:.04em;width:56px}
+.perm-table th:first-child{text-align:left;width:auto;padding-left:10px}
+.perm-table td{padding:7px 4px;border-bottom:0.5px solid var(--border);text-align:center}
+.perm-table td:first-child{text-align:left;font-weight:500;padding-left:10px;font-size:13px}
+.perm-table tr:last-child td{border-bottom:none}
+.perm-table tr:hover td{background:var(--bg2)}
+.perm-table input[type=checkbox]{
+  width:18px;height:18px;
+  accent-color:var(--accent);
+  cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  border:2px solid var(--border2);
+  border-radius:4px;
+  background:var(--bg);
+  display:inline-flex;align-items:center;justify-content:center;
+  position:relative;
+  transition:all .15s;
+  vertical-align:middle;
+}
+.perm-table input[type=checkbox]:checked{
+  background:var(--accent);
+  border-color:var(--accent);
+}
+.perm-table input[type=checkbox]:checked::after{
+  content:'✓';
+  position:absolute;
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+}
+.perm-table input[type=checkbox]:hover:not(:checked){
+  border-color:var(--accent);
+  background:var(--accent-light);
+}
+.perm-row-label{display:flex;align-items:center;gap:6px}
+
+/* ── USER CARDS ── */
+.user-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border:0.5px solid var(--border);border-radius:var(--rl);margin-bottom:8px;background:var(--bg3)}
+.user-card-body{flex:1;min-width:0}
+.user-card-name{font-weight:600;font-size:13px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.user-card-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.user-card-actions{display:flex;gap:5px;flex-shrink:0;flex-direction:column}
+@media(min-width:500px){.user-card-actions{flex-direction:row}}
+
+/* ── STOCK SPECIFIC ── */
+.stock-bar-wrap{display:flex;align-items:center;gap:8px}
+.stock-bar{flex:1;height:6px;border-radius:3px;background:var(--bg2);overflow:hidden;min-width:60px}
+.stock-bar-fill{height:100%;border-radius:3px;transition:width .3s}
+.stock-badge-crit{background:var(--danger-bg);color:var(--danger)}
+.stock-badge-low{background:var(--warn-bg);color:var(--warn)}
+.stock-badge-ok{background:var(--success-bg);color:var(--success)}
+.alim-icon{width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--accent-light)}
+.mvt-in{color:var(--success);font-weight:700}
+.mvt-out{color:var(--danger);font-weight:700}
+
+/* ── BOTTOM NAV (mobile only) ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:calc(var(--bottomnav-h) + var(--safe-bottom));background:var(--bg3);border-top:0.5px solid var(--border2);z-index:100;padding-bottom:var(--safe-bottom)}
+.bottom-nav-inner{display:flex;height:var(--bottomnav-h);align-items:stretch}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:transparent;border:none;cursor:pointer;font-size:10px;color:var(--text3);padding:6px 2px;transition:color .15s;-webkit-appearance:none;touch-action:manipulation}
+.bnav-btn:disabled{opacity:.3;cursor:not-allowed}
+.bnav-btn.active{color:var(--accent)}
+.bnav-btn .bico{font-size:20px;line-height:1}
+.bnav-btn .blbl{font-size:10px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56px}
+
+/* ── RESPONSIVE SHOW/HIDE ── */
+@media(max-width:768px){
+  .desktop-nav{display:none}
+  .hamburger{display:flex}
+  .bottom-nav{display:block}
+  .topbar-right .user-pill .uname,.topbar-right .user-pill .urole{display:none}
+  .topbar-right .btn-sm{font-size:11px;padding:5px 8px}
+}
+@media(min-width:769px){
+  .hamburger{display:none}
+  .drawer,.drawer-overlay{display:none!important}
+  .bottom-nav{display:none!important}
+  .main-content{padding-bottom:20px}
+}
+
+/* Specific mobile table tweaks */
+@media(max-width:600px){
+  td,th{padding:8px 7px;font-size:12px}
+  .metric-value{font-size:18px}
+  .page{padding:12px}
+  .card{padding:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo"><span class="ico">🐖</span></div>
+    <div class="login-title">Ferme Enzo</div>
+    <div class="login-sub">Gestion de la Porcherie</div>
+    <div class="login-error" id="login-error">Identifiants incorrects ou compte inactif.</div>
+    <div class="form-group" style="margin-top:8px"><label class="form-label">Nom d'utilisateur</label><input type="text" id="login-user" placeholder="admin" autocomplete="username"></div>
+    <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-accent btn-full" style="margin-top:4px;padding:11px" onclick="doLogin()">Se connecter</button>
+
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div class="app-shell" id="app-shell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" onclick="toggleDrawer()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="logo">
+      <span class="ico">🐖</span>
+      <div class="logo-text">
+        <span class="brand">Ferme Enzo</span>
+        <span class="sub">Gestion de la Porcherie</span>
+      </div>
+    </div>
+    <nav class="desktop-nav" id="desktop-nav">
+      <button class="nav-btn active" data-page="dashboard"    onclick="showPage('dashboard',this)">Tableau de bord</button>
+      <button class="nav-btn" data-page="porcs"               onclick="showPage('porcs',this)">Porcs</button>
+      <button class="nav-btn" data-page="reproduction"        onclick="showPage('reproduction',this)">Reproduction</button>
+      <button class="nav-btn" data-page="portees"             onclick="showPage('portees',this)">Portées</button>
+      <button class="nav-btn" data-page="sante"               onclick="showPage('sante',this)">Santé</button>
+      <button class="nav-btn" data-page="ventes"              onclick="showPage('ventes',this)">Ventes</button>
+      <button class="nav-btn" data-page="stats"               onclick="showPage('stats',this)">Statistiques</button>
+      <button class="nav-btn" data-page="stocks"              onclick="showPage('stocks',this)">Stocks</button>
+      <button class="nav-btn" data-page="utilisateurs"        onclick="showPage('utilisateurs',this)">Utilisateurs</button>
+    </nav>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="user-av" id="tb-av">?</div>
+        <div>
+          <div class="uname" id="tb-name">—</div>
+          <span class="urole" id="tb-role">—</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()" title="Changer le thème">🌙</button>
+      <button class="btn btn-sm" onclick="doLogout()">Déco.</button>
+    </div>
+  </div>
+
+  <!-- MOBILE DRAWER -->
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <span class="ico" style="font-size:26px">🐖</span>
+      <div><div class="brand">Ferme Enzo</div><div class="sub">Gestion de la Porcherie</div></div>
+    </div>
+    <div class="drawer-nav" id="drawer-nav">
+      <button class="drawer-btn active" data-page="dashboard"   onclick="drawerNav('dashboard',this)"><span class="dicon">📊</span>Tableau de bord</button>
+      <button class="drawer-btn" data-page="porcs"              onclick="drawerNav('porcs',this)"><span class="dicon">🐷</span>Porcs</button>
+      <button class="drawer-btn" data-page="reproduction"       onclick="drawerNav('reproduction',this)"><span class="dicon">💞</span>Reproduction</button>
+      <button class="drawer-btn" data-page="portees"            onclick="drawerNav('portees',this)"><span class="dicon">🐽</span>Portées</button>
+      <button class="drawer-btn" data-page="sante"              onclick="drawerNav('sante',this)"><span class="dicon">💉</span>Santé</button>
+      <button class="drawer-btn" data-page="ventes"             onclick="drawerNav('ventes',this)"><span class="dicon">💰</span>Ventes</button>
+      <button class="drawer-btn" data-page="stats"              onclick="drawerNav('stats',this)"><span class="dicon">📈</span>Statistiques</button>
+      <button class="drawer-btn" data-page="stocks"             onclick="drawerNav('stocks',this)"><span class="dicon">🌽</span>Stocks</button>
+      <button class="drawer-btn" data-page="utilisateurs"       onclick="drawerNav('utilisateurs',this)"><span class="dicon">👥</span>Utilisateurs</button>
+    </div>
+    <div class="drawer-user">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="user-av" id="drawer-av" style="width:38px;height:38px;font-size:14px">?</div>
+        <div><div style="font-weight:600;font-size:13px" id="drawer-name">—</div><span class="urole" id="drawer-role">—</span></div>
+      </div>
+      <button class="btn btn-full" onclick="toggleTheme()" style="font-size:13px;margin-bottom:8px" id="drawer-theme-btn">🌙 Thème sombre</button>
+      <button class="btn btn-full" onclick="doLogout()" style="font-size:13px">Déconnexion</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="grid-4">
+        <div class="metric"><div class="metric-label">Porcs actifs</div><div class="metric-value" id="s-total">0</div><div class="metric-sub">troupeau</div></div>
+        <div class="metric"><div class="metric-label">Truies</div><div class="metric-value" id="s-truies">0</div><div class="metric-sub">reproductrices</div></div>
+        <div class="metric"><div class="metric-label">Naissances/mois</div><div class="metric-value" id="s-naiss">0</div><div class="metric-sub">porcelets</div></div>
+        <div class="metric"><div class="metric-label">Revenus ventes</div><div class="metric-value" id="s-rev">0 F</div><div class="metric-sub">cumulé</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><span class="card-title">Alertes santé</span><span class="badge badge-amber" id="d-alerte-ct">0</span></div><div id="d-alertes"><div class="empty-state">Aucune alerte</div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Prochaines mises bas</span></div><div id="d-misesbas"><div class="empty-state">Aucune gestation</div></div></div>
+      </div>
+      <div class="card"><div class="card-header"><span class="card-title">Activité récente</span></div><div id="d-activite"><div class="empty-state">Démarrez en ajoutant des porcs</div></div></div>
+    </div>
+
+    <!-- PORCS -->
+    <div class="page" id="page-porcs">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Registre des porcs</span>
+          <button class="btn btn-accent btn-sm" id="btn-add-porc" onclick="openModal('modal-porc')">+ Ajouter</button>
+        </div>
+        <div class="filter-bar">
+          <input type="search" placeholder="Rechercher…" id="search-porc" oninput="renderPorcs()" style="flex:1;min-width:120px;max-width:240px">
+          <select onchange="fSexe=this.value;renderPorcs()" style="max-width:130px"><option value="">Tous sexes</option><option value="male">Mâles</option><option value="femelle">Femelles</option></select>
+          <select onchange="fStatut=this.value;renderPorcs()" style="max-width:130px"><option value="">Tous statuts</option><option value="actif">Actif</option><option value="vendu">Vendu</option><option value="décédé">Décédé</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Porc</th><th>Sexe</th><th>Race</th><th>Poids</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="tb-porcs"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- REPRODUCTION -->
+    <div class="page" id="page-reproduction">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Croisements</span><button class="btn btn-accent btn-sm" id="btn-add-crois" onclick="openModal('modal-croisement')">+ Enregistrer</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Truie</th><th>Verrat</th><th>Méthode</th><th>Mise bas prévue</th><th>Statut</th></tr></thead><tbody id="tb-croisements"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- PORTEES -->
+    <div class="page" id="page-portees">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Portées</span><button class="btn btn-accent btn-sm" id="btn-add-portee" onclick="openModal('modal-portee')">+ Enregistrer</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Mère</th><th>Père</th><th>Vivants</th><th>Morts</th><th>Sevrage</th><th>Survie</th></tr></thead><tbody id="tb-portees"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- SANTE -->
+    <div class="page" id="page-sante">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Journal de santé</span><button class="btn btn-accent btn-sm" id="btn-add-sante" onclick="openModal('modal-sante')">+ Événement</button></div>
+        <div class="filter-bar">
+          <select onchange="fSanteT=this.value;renderSante()" style="max-width:160px"><option value="">Tous types</option><option value="vaccination">Vaccination</option><option value="traitement">Traitement</option><option value="contrôle">Contrôle</option><option value="chirurgie">Chirurgie</option></select>
+          <select onchange="fSanteS=this.value;renderSante()" style="max-width:140px"><option value="">Tous statuts</option><option value="planifié">Planifié</option><option value="effectué">Effectué</option><option value="en cours">En cours</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Porc</th><th>Type</th><th>Description</th><th>Coût</th><th>Statut</th></tr></thead><tbody id="tb-sante"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- VENTES -->
+    <div class="page" id="page-ventes">
+      <div class="grid-3">
+        <div class="metric"><div class="metric-label">Total ventes</div><div class="metric-value" id="v-ct">0</div></div>
+        <div class="metric"><div class="metric-label">Revenu total</div><div class="metric-value" id="v-rev">0 F</div></div>
+        <div class="metric"><div class="metric-label">Prix moyen</div><div class="metric-value" id="v-moy">0 F</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Registre des ventes</span><button class="btn btn-accent btn-sm" id="btn-add-vente" onclick="openModal('modal-vente')">+ Enregistrer</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Porc</th><th>Acheteur</th><th>Prix (FCFA)</th><th>Paiement</th><th>Statut</th></tr></thead><tbody id="tb-ventes"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="page" id="page-stats">
+      <div class="grid-4" id="stats-kpi"></div>
+      <div class="grid-2">
+        <div class="card"><div class="card-header"><span class="card-title">Ventes par mois</span></div><div class="chart-wrap" style="height:200px"><canvas id="chart-v"></canvas></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Répartition troupeau</span></div><div class="chart-wrap" style="height:200px"><canvas id="chart-t"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-header"><span class="card-title">Indicateurs détaillés</span></div><div id="stats-det"></div></div>
+    </div>
+
+    <!-- STOCKS -->
+    <div class="page" id="page-stocks">
+      <div class="grid-4" id="stk-kpi"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Catalogue des aliments</span>
+            <button class="btn btn-accent btn-sm" id="btn-add-alim" onclick="openModal('modal-alim')">+ Aliment</button>
+          </div>
+          <div id="alim-list"><div class="empty-state">Aucun aliment</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Alertes stock</span><span class="badge badge-amber" id="stk-alerte-ct">0</span></div>
+          <div id="stk-alertes"><div class="empty-state">Aucune alerte</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Journal des mouvements</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn btn-sm" id="btn-entree" onclick="openMvtModal('entree')" style="color:var(--success);border-color:var(--success)">+ Entrée</button>
+            <button class="btn btn-sm" id="btn-sortie" onclick="openMvtModal('sortie')" style="color:var(--danger);border-color:var(--danger)">− Sortie</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <select id="stk-filter-alim" onchange="renderMvts()" style="max-width:180px"><option value="">Tous les aliments</option></select>
+          <select id="stk-filter-type" onchange="renderMvts()" style="max-width:140px"><option value="">Tous types</option><option value="entree">Entrées</option><option value="sortie">Sorties</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Aliment</th><th>Type</th><th>Qté (kg)</th><th>Montant</th><th>Motif</th><th>Stock après</th></tr></thead><tbody id="tb-mvts"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Consommation mensuelle</span></div>
+        <div class="chart-wrap" style="height:240px"><canvas id="chart-conso"></canvas></div>
+      </div>
+    </div>
+
+    <!-- UTILISATEURS -->
+    <div class="page" id="page-utilisateurs">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Utilisateurs</span>
+          <button class="btn btn-accent btn-sm" id="btn-add-user" onclick="openUserModal(null)">+ Nouveau</button>
+        </div>
+        <div id="users-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- BOTTOM NAV (mobile) -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="bnav-btn active" data-page="dashboard"  onclick="showPage('dashboard',this)"><span class="bico">📊</span><span class="blbl">Accueil</span></button>
+      <button class="bnav-btn" data-page="porcs"             onclick="showPage('porcs',this)"><span class="bico">🐷</span><span class="blbl">Porcs</span></button>
+      <button class="bnav-btn" data-page="ventes"            onclick="showPage('ventes',this)"><span class="bico">💰</span><span class="blbl">Ventes</span></button>
+      <button class="bnav-btn" data-page="stocks"            onclick="showPage('stocks',this)"><span class="bico">🌽</span><span class="blbl">Stocks</span></button>
+      <button class="bnav-btn" data-page="__menu"            onclick="toggleDrawer()"><span class="bico">☰</span><span class="blbl">Menu</span></button>
+    </div>
+  </nav>
+
+</div><!-- /app-shell -->
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- Porc -->
+<div class="modal-overlay" id="modal-porc">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title" id="modal-porc-title">Ajouter un porc</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Numéro / ID</label><input type="text" id="p-id" placeholder="P001"></div>
+      <div class="form-group"><label class="form-label">Nom</label><input type="text" id="p-nom" placeholder="Nom"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Sexe</label><select id="p-sexe"><option value="male">Mâle (verrat)</option><option value="femelle">Femelle (truie)</option></select></div>
+      <div class="form-group"><label class="form-label">Race</label><input type="text" id="p-race" placeholder="Large White…"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date de naissance</label><input type="date" id="p-naissance"></div>
+      <div class="form-group"><label class="form-label">Poids (kg)</label><input type="number" id="p-poids" min="0" step="0.1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Origine</label><input type="text" id="p-origine" placeholder="Élevage, achat…"></div>
+      <div class="form-group"><label class="form-label">Statut</label><select id="p-statut"><option value="actif">Actif</option><option value="vendu">Vendu</option><option value="décédé">Décédé</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="p-notes" rows="2"></textarea></div>
+    <input type="hidden" id="p-idx" value="-1">
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modal-porc')">Annuler</button><button class="btn btn-accent" onclick="savePorc()">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- Croisement -->
+<div class="modal-overlay" id="modal-croisement">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">Enregistrer un croisement</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Truie (mère)</label><select id="c-truie"></select></div><div class="form-group"><label class="form-label">Verrat (père)</label><select id="c-verrat"></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Date saillie</label><input type="date" id="c-date"></div><div class="form-group"><label class="form-label">Méthode</label><select id="c-methode"><option value="naturelle">Naturelle</option><option value="IA">Insémination artificielle</option></select></div></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="c-notes" rows="2"></textarea></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modal-croisement')">Annuler</button><button class="btn btn-accent" onclick="saveCroisement()">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- Portée -->
+<div class="modal-overlay" id="modal-portee">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">Enregistrer une portée</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Mère</label><select id="pt-mere"></select></div><div class="form-group"><label class="form-label">Père</label><select id="pt-pere"></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Date de naissance</label><input type="date" id="pt-date"></div><div class="form-group"><label class="form-label">Nb. vivants</label><input type="number" id="pt-vivants" min="0" value="0"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Nb. morts-nés</label><input type="number" id="pt-morts" min="0" value="0"></div><div class="form-group"><label class="form-label">Poids moy. (kg)</label><input type="number" id="pt-poids" step="0.1" placeholder="1.2"></div></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="pt-notes" rows="2"></textarea></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modal-portee')">Annuler</button><button class="btn btn-accent" onclick="savePortee()">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- Santé -->
+<div class="modal-overlay" id="modal-sante">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">Événement de santé</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Porc</label><select id="s-porc"><option value="troupeau">Tout le troupeau</option></select></div><div class="form-group"><label class="form-label">Date</label><input type="date" id="s-date"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select id="s-type"><option value="vaccination">Vaccination</option><option value="traitement">Traitement</option><option value="contrôle">Contrôle</option><option value="chirurgie">Chirurgie</option></select></div><div class="form-group"><label class="form-label">Statut</label><select id="s-statut"><option value="planifié">Planifié</option><option value="effectué">Effectué</option><option value="en cours">En cours</option></select></div></div>
+    <div class="form-group"><label class="form-label">Description</label><input type="text" id="s-desc" placeholder="Vaccin PPC…"></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Vétérinaire</label><input type="text" id="s-vet"></div><div class="form-group"><label class="form-label">Coût (FCFA)</label><input type="number" id="s-cout" placeholder="0"></div></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="s-notes" rows="2"></textarea></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modal-sante')">Annuler</button><button class="btn btn-accent" onclick="saveSante()">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- Vente -->
+<div class="modal-overlay" id="modal-vente">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title">Enregistrer une vente</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Porc vendu</label><select id="vt-porc"></select></div><div class="form-group"><label class="form-label">Date</label><input type="date" id="vt-date"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Acheteur</label><input type="text" id="vt-acheteur"></div><div class="form-group"><label class="form-label">Poids vif (kg)</label><input type="number" id="vt-poids"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Prix (FCFA)</label><input type="number" id="vt-prix"></div><div class="form-group"><label class="form-label">Mode paiement</label><select id="vt-mode"><option value="espèces">Espèces</option><option value="mobile money">Mobile Money</option><option value="virement">Virement</option><option value="crédit">Crédit</option></select></div></div>
+    <div class="form-group"><label class="form-label">Statut paiement</label><select id="vt-statut"><option value="payé">Payé</option><option value="partiel">Partiel</option><option value="en attente">En attente</option></select></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="vt-notes" rows="2"></textarea></div>
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modal-vente')">Annuler</button><button class="btn btn-accent" onclick="saveVente()">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- Aliment -->
+<div class="modal-overlay" id="modal-alim">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title" id="alim-modal-title">Nouvel aliment</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nom de l'aliment</label><input type="text" id="al-nom" placeholder="Maïs concassé, Son de blé…"></div>
+      <div class="form-group"><label class="form-label">Catégorie</label><select id="al-cat"><option value="céréales">Céréales</option><option value="concentré">Concentré protéique</option><option value="minéraux">Minéraux / Vitamines</option><option value="complet">Aliment complet</option><option value="autre">Autre</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Stock initial (kg)</label><input type="number" id="al-stock" min="0" step="0.1" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Seuil d'alerte (kg)</label><input type="number" id="al-seuil" min="0" placeholder="50"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Prix d'achat (FCFA/kg)</label><input type="number" id="al-prix" min="0" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Fournisseur</label><input type="text" id="al-fournisseur" placeholder="Nom du fournisseur"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="al-notes" rows="2"></textarea></div>
+    <input type="hidden" id="al-idx" value="-1">
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modal-alim')">Annuler</button><button class="btn btn-accent" onclick="saveAlim()">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- Mouvement stock -->
+<div class="modal-overlay" id="modal-mvt">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title" id="mvt-modal-title">Entrée de stock</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Aliment</label><select id="mvt-alim"></select></div><div class="form-group"><label class="form-label">Date</label><input type="date" id="mvt-date"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Quantité (kg)</label><input type="number" id="mvt-qte" min="0.1" step="0.1" placeholder="0" oninput="calcMvtTotal()"></div>
+      <div class="form-group"><label class="form-label">Prix unit. (FCFA/kg)</label><input type="number" id="mvt-prix" min="0" placeholder="0" oninput="calcMvtTotal()"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Montant total (FCFA)</label><input type="number" id="mvt-total" readonly style="background:var(--bg2)" placeholder="Calculé auto."></div>
+    <div class="form-group"><label class="form-label" id="mvt-motif-label">Fournisseur / Référence</label><input type="text" id="mvt-motif"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea id="mvt-notes" rows="2"></textarea></div>
+    <input type="hidden" id="mvt-type" value="entree">
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modal-mvt')">Annuler</button><button class="btn btn-accent" onclick="saveMvt()">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- Utilisateur -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <span class="modal-handle"></span>
+    <div class="modal-title" id="user-modal-title">Nouvel utilisateur</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Prénom et nom</label><input type="text" id="u-nom" placeholder="Jean Dupont"></div>
+      <div class="form-group"><label class="form-label">Nom d'utilisateur</label><input type="text" id="u-login" placeholder="jean.dupont" autocomplete="off"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" id="u-pass" placeholder="Laisser vide = inchangé" autocomplete="new-password"></div>
+      <div class="form-group"><label class="form-label">Statut</label><select id="u-statut"><option value="actif">Actif</option><option value="inactif">Inactif</option></select></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rôle prédéfini</label>
+      <select id="u-role" onchange="applyPreset()">
+        <option value="">— Choisir un rôle —</option>
+        <option value="admin">Administrateur — tous les droits</option>
+        <option value="gerant">Gérant — tout sauf supprimer</option>
+        <option value="eleveur">Éleveur — porcs + reproduction + stocks</option>
+        <option value="veterinaire">Vétérinaire — lecture + santé</option>
+        <option value="commercial">Commercial — ventes + stats</option>
+        <option value="lecteur">Lecteur — lecture seule</option>
+        <option value="vide">Personnalisé</option>
+      </select>
+    </div>
+    <div style="margin-top:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <span>Droits d'accès détaillés</span>
+        <span style="font-size:10px;font-weight:400;color:var(--text3)">(changer un droit → rôle Personnalisé)</span>
+      </div>
+      <div style="overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--r)">
+        <table class="perm-table">
+          <thead><tr><th>Module</th><th title="Voir">👁</th><th title="Créer">＋</th><th title="Modifier">✏️</th><th title="Supprimer">🗑</th></tr></thead>
+          <tbody id="perm-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <input type="hidden" id="u-edit-login" value="">
+    <div class="modal-footer"><button class="btn" onclick="closeModal('modal-user')">Annuler</button><button class="btn btn-accent" onclick="saveUser()">Enregistrer</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════
+//  SÉCURITÉ — Échappement XSS
+// ═══════════════════════════════════════════════════
+const _d=document.createElement('div');
+function esc(v){
+  if(v==null)return'';
+  _d.textContent=String(v);
+  return _d.innerHTML;
+}
+// Formate une date en français — retourne '—' si la date est absente ou invalide
+function fmtDate(v){
+  if(!v)return'—';
+  const d=new Date(v);
+  return isNaN(d.getTime())?'—':d.toLocaleDateString('fr-FR');
+}
+
+// ═══════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════
+const MODULES = [
+  {key:'dashboard',    label:'Tableau de bord', actions:['read']},
+  {key:'porcs',        label:'Porcs',            actions:['read','create','edit','delete']},
+  {key:'reproduction', label:'Reproduction',     actions:['read','create','edit','delete']},
+  {key:'portees',      label:'Portées',          actions:['read','create','edit','delete']},
+  {key:'sante',        label:'Santé',            actions:['read','create','edit','delete']},
+  {key:'ventes',       label:'Ventes',           actions:['read','create','edit','delete']},
+  {key:'stats',        label:'Statistiques',     actions:['read']},
+  {key:'stocks',       label:'Stocks aliments',  actions:['read','create','edit','delete']},
+  {key:'utilisateurs', label:'Utilisateurs',     actions:['read','create','edit','delete']},
+];
+
+const PRESETS = {
+  admin:      {dashboard:{read:1},porcs:{read:1,create:1,edit:1,delete:1},reproduction:{read:1,create:1,edit:1,delete:1},portees:{read:1,create:1,edit:1,delete:1},sante:{read:1,create:1,edit:1,delete:1},ventes:{read:1,create:1,edit:1,delete:1},stats:{read:1},stocks:{read:1,create:1,edit:1,delete:1},utilisateurs:{read:1,create:1,edit:1,delete:1}},
+  gerant:     {dashboard:{read:1},porcs:{read:1,create:1,edit:1},reproduction:{read:1,create:1,edit:1},portees:{read:1,create:1,edit:1},sante:{read:1,create:1,edit:1},ventes:{read:1,create:1,edit:1},stats:{read:1},stocks:{read:1,create:1,edit:1},utilisateurs:{read:1}},
+  eleveur:    {dashboard:{read:1},porcs:{read:1,create:1,edit:1},reproduction:{read:1,create:1,edit:1},portees:{read:1,create:1,edit:1},sante:{read:1},stocks:{read:1,create:1,edit:1}},
+  veterinaire:{dashboard:{read:1},porcs:{read:1},reproduction:{read:1},portees:{read:1},sante:{read:1,create:1,edit:1},stocks:{read:1}},
+  commercial: {dashboard:{read:1},porcs:{read:1},ventes:{read:1,create:1,edit:1},stats:{read:1}},
+  lecteur:    {dashboard:{read:1},porcs:{read:1},reproduction:{read:1},portees:{read:1},sante:{read:1},ventes:{read:1},stats:{read:1},stocks:{read:1}},
+  vide:       {}
+};
+
+const ROLE_META = {
+  admin:      {label:'Administrateur',color:'#2d7a2d',bg:'#eaf5e8'},
+  gerant:     {label:'Gérant',        color:'#1a5fa8',bg:'#e6f0fb'},
+  eleveur:    {label:'Éleveur',       color:'#a05c00',bg:'#fff3e0'},
+  veterinaire:{label:'Vétérinaire',   color:'#0d7a6e',bg:'#e0f7f5'},
+  commercial: {label:'Commercial',    color:'#8a2d8a',bg:'#f7e0f7'},
+  lecteur:    {label:'Lecteur',       color:'#555',   bg:'#f0f0f0'},
+  vide:       {label:'Personnalisé',  color:'#666',   bg:'#f5f5f5'},
+};
+
+const NAV_ICONS = {dashboard:'📊',porcs:'🐷',reproduction:'💞',portees:'🐽',sante:'💉',ventes:'💰',stats:'📈',stocks:'🌽',utilisateurs:'👥'};
+const CAT_ICONS = {céréales:'🌽',concentré:'🧪',minéraux:'💊',complet:'🥣',autre:'📦'};
+
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let users       = null; // Sera chargé depuis Supabase (localStorage en fallback)
+let porcs       = JSON.parse(localStorage.getItem('pcrm_porcs')       || '[]');
+let croisements = JSON.parse(localStorage.getItem('pcrm_croisements') || '[]');
+let portees     = JSON.parse(localStorage.getItem('pcrm_portees')     || '[]');
+let sante       = JSON.parse(localStorage.getItem('pcrm_sante')       || '[]');
+let ventes      = JSON.parse(localStorage.getItem('pcrm_ventes')      || '[]');
+let activite    = JSON.parse(localStorage.getItem('pcrm_activite')    || '[]');
+let aliments    = JSON.parse(localStorage.getItem('pcrm_aliments')    || '[]');
+let mouvements  = JSON.parse(localStorage.getItem('pcrm_mouvements')  || '[]');
+let currentUser = null;
+let chartV=null, chartT=null, chartConso=null;
+let fSexe='', fStatut='', fSanteT='', fSanteS='';
+
+// users sera initialisé par initApp() depuis Supabase
+// On met un tableau vide pour éviter les erreurs null avant le chargement
+if (!users) users = [];
+
+// ═══════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════
+const can=(mod,act='read')=>{
+  if(!currentUser)return false;
+  if(mod==='dashboard'&&act==='read')return true;
+  return !!(currentUser.permissions?.[mod]?.[act]);
+};
+const ini=str=>(str||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+
+// ═══════════════════════════════════════════════════
+//  THÈME CLAIR / SOMBRE
+// ═══════════════════════════════════════════════════
+function _applyTheme(theme){
+  const html = document.documentElement;
+  html.classList.remove('theme-dark','theme-light');
+  html.classList.add('theme-' + theme);
+  // Mettre à jour les icônes des boutons
+  const isDark = theme === 'dark';
+  const btn = document.getElementById('theme-btn');
+  const drawerBtn = document.getElementById('drawer-theme-btn');
+  if(btn) btn.textContent = isDark ? '☀️' : '🌙';
+  if(drawerBtn) drawerBtn.textContent = (isDark ? '☀️ Thème clair' : '🌙 Thème sombre');
+}
+function toggleTheme(){
+  const current = localStorage.getItem('pcrm_theme') || 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('pcrm_theme', next);
+  _applyTheme(next);
+}
+// Appliquer le thème sauvegardé dès le chargement
+(function(){
+  const saved = localStorage.getItem('pcrm_theme');
+  if(saved){
+    _applyTheme(saved);
+  } else {
+    // Détecter la préférence système
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme:dark)').matches;
+    _applyTheme(prefersDark ? 'dark' : 'light');
+  }
+})();
+
+function persist(){
+  // Proxy : délègue toujours à window.persist pour que la surcharge Supabase soit active.
+  // Appel synchrone de la version localStorage, la version Supabase (async) se greffe dessus.
+  try{
+    localStorage.setItem('pcrm_users',JSON.stringify(users));
+    localStorage.setItem('pcrm_porcs',JSON.stringify(porcs));
+    localStorage.setItem('pcrm_croisements',JSON.stringify(croisements));
+    localStorage.setItem('pcrm_portees',JSON.stringify(portees));
+    localStorage.setItem('pcrm_sante',JSON.stringify(sante));
+    localStorage.setItem('pcrm_ventes',JSON.stringify(ventes));
+    localStorage.setItem('pcrm_activite',JSON.stringify(activite));
+    localStorage.setItem('pcrm_aliments',JSON.stringify(aliments));
+    localStorage.setItem('pcrm_mouvements',JSON.stringify(mouvements));
+  }catch(e){}
+  // Déclenche la sync Supabase en async (si disponible)
+  if(typeof window._supabasePersist === 'function') window._supabasePersist();
+}
+
+function log(msg){
+  activite.unshift({date:new Date().toLocaleDateString('fr-FR'),msg,by:currentUser?.login||'?'});
+  if(activite.length>40)activite.pop();
+}
+
+// ═══════════════════════════════════════════════════
+//  DRAWER / MOBILE NAV
+// ═══════════════════════════════════════════════════
+function toggleDrawer(){
+  const d=document.getElementById('drawer');
+  const o=document.getElementById('drawer-overlay');
+  const h=document.getElementById('hamburger');
+  const isOpen=d.classList.contains('open');
+  if(isOpen){d.classList.remove('open');o.classList.remove('open');h.classList.remove('open');}
+  else{d.classList.add('open');o.classList.add('open');h.classList.add('open');}
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+}
+function drawerNav(page,btn){
+  closeDrawer();
+  // sync drawer btns
+  document.querySelectorAll('.drawer-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // sync desktop nav
+  document.querySelectorAll('.desktop-nav .nav-btn').forEach(b=>{b.classList.toggle('active',b.dataset.page===page);});
+  // sync bottom nav
+  document.querySelectorAll('.bnav-btn').forEach(b=>{b.classList.toggle('active',b.dataset.page===page);});
+  _renderPage(page);
+}
+
+// ═══════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════
+function doLogin(){
+  const login=document.getElementById('login-user').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-error');
+  if(!users || users.length===0){err.textContent='Chargement en cours, veuillez patienter…';err.style.display='block';return;}
+  const u=users.find(x=>x.login===login&&x.pass===btoa(pass)&&x.statut==='actif');
+  if(!u){err.textContent='Identifiants incorrects ou compte inactif.';err.style.display='block';return;}
+  err.style.display='none';
+  currentUser=u;
+  sessionStorage.setItem('pcrm_session',login);
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-shell').classList.add('visible');
+  updateTopbar();
+  applyNavPerms();
+  renderDashboard();
+}
+function doLogout(){
+  currentUser=null;
+  sessionStorage.removeItem('pcrm_session');
+  document.getElementById('app-shell').classList.remove('visible');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  // Réinitialiser les champs de mot de passe ouverts éventuellement
+  const up=document.getElementById('u-pass');if(up)up.value='';
+  closeDrawer();
+}
+function updateTopbar(){
+  if(!currentUser)return;
+  const meta=ROLE_META[currentUser.role]||ROLE_META.vide;
+  ['tb-av','drawer-av'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.textContent=ini(currentUser.nom);
+    el.style.background=meta.bg;
+    el.style.color=meta.color;
+  });
+  document.getElementById('tb-name').textContent=currentUser.nom;
+  document.getElementById('drawer-name').textContent=currentUser.nom;
+  ['tb-role','drawer-role'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.textContent=meta.label;
+    el.style.background=meta.bg;
+    el.style.color=meta.color;
+  });
+}
+function applyNavPerms(){
+  // desktop nav
+  document.querySelectorAll('.desktop-nav .nav-btn[data-page]').forEach(btn=>{
+    btn.disabled=(btn.dataset.page!=='dashboard')&&!can(btn.dataset.page,'read');
+  });
+  // drawer
+  document.querySelectorAll('.drawer-btn[data-page]').forEach(btn=>{
+    btn.disabled=(btn.dataset.page!=='dashboard')&&!can(btn.dataset.page,'read');
+  });
+  // bottom nav
+  document.querySelectorAll('.bnav-btn[data-page]').forEach(btn=>{
+    if(btn.dataset.page==='__menu')return;
+    btn.disabled=(btn.dataset.page!=='dashboard')&&!can(btn.dataset.page,'read');
+  });
+  // add buttons
+  const btns={'btn-add-porc':can('porcs','create'),'btn-add-crois':can('reproduction','create'),'btn-add-portee':can('portees','create'),'btn-add-sante':can('sante','create'),'btn-add-vente':can('ventes','create'),'btn-add-alim':can('stocks','create'),'btn-entree':can('stocks','create'),'btn-sortie':can('stocks','create'),'btn-add-user':can('utilisateurs','create')};
+  Object.entries(btns).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.style.display=v?'':'none';});
+}
+
+// ═══════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════
+function showPage(page,btn){
+  // sync all nav buttons
+  document.querySelectorAll('[data-page]').forEach(b=>{b.classList.toggle('active',b.dataset.page===page);});
+  _renderPage(page);
+}
+
+function _renderPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-'+page);
+  if(!pg)return;
+  pg.classList.add('active');
+  if(page!=='dashboard'&&!can(page,'read')){
+    pg.innerHTML='<div class="access-denied"><div class="lock">🔒</div><h3 style="color:var(--text2);font-size:15px;margin-bottom:6px">Accès refusé</h3><p style="font-size:13px">Vous n\'avez pas accès à ce module.</p></div>';
+    return;
+  }
+  const map={
+    dashboard:renderDashboard,porcs:renderPorcs,stats:renderStats,utilisateurs:renderUsers,stocks:renderStocks,
+    reproduction:()=>{populateSel();renderCroisements();},
+    portees:()=>{populateSel();renderPortees();},
+    sante:()=>{populateSel();renderSante();},
+    ventes:()=>{populateSel();renderVentes();}
+  };
+  if(map[page])map[page]();
+}
+
+// ═══════════════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════════════
+function openModal(id){
+  populateSel();
+  if(id==='modal-porc'){document.getElementById('p-idx').value=-1;document.getElementById('modal-porc-title').textContent='Ajouter un porc';['p-id','p-nom','p-race','p-origine','p-notes'].forEach(f=>document.getElementById(f).value='');document.getElementById('p-poids').value='';document.getElementById('p-naissance').value='';document.getElementById('p-sexe').value='male';document.getElementById('p-statut').value='actif';}
+  if(id==='modal-alim'){document.getElementById('al-idx').value=-1;document.getElementById('alim-modal-title').textContent='Nouvel aliment';['al-nom','al-stock','al-seuil','al-prix','al-fournisseur','al-notes'].forEach(f=>document.getElementById(f).value='');document.getElementById('al-cat').value='céréales';}
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
+
+// ═══════════════════════════════════════════════════
+//  SELECTS
+// ═══════════════════════════════════════════════════
+function populateSel(){
+  const truies=porcs.filter(p=>p.sexe==='femelle'&&p.statut==='actif');
+  const verrats=porcs.filter(p=>p.sexe==='male'&&p.statut==='actif');
+  const actifs=porcs.filter(p=>p.statut==='actif');
+  const opt=arr=>arr.length?arr.map(p=>`<option value="${esc(p.id)}">${esc(p.nom||p.id)}</option>`).join(''):'<option value="">—</option>';
+  ['c-truie','pt-mere'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=opt(truies);});
+  ['c-verrat','pt-pere'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=opt(verrats);});
+  const sp=document.getElementById('s-porc');if(sp)sp.innerHTML='<option value="troupeau">Tout le troupeau</option>'+porcs.map(p=>`<option value="${esc(p.id)}">${esc(p.nom||p.id)}</option>`).join('');
+  const vp=document.getElementById('vt-porc');if(vp)vp.innerHTML=opt(actifs);
+}
+
+// ═══════════════════════════════════════════════════
+//  PERMISSIONS UI
+// ═══════════════════════════════════════════════════
+function buildPermTable(){
+  document.getElementById('perm-tbody').innerHTML=MODULES.map(mod=>{
+    const icon=NAV_ICONS[mod.key]||'📋';
+    const cells=['read','create','edit','delete'].map(act=>{
+      if(!mod.actions.includes(act))return'<td style="color:var(--border2);font-size:16px">—</td>';
+      return`<td><label style="cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px"><input type="checkbox" data-mod="${mod.key}" data-act="${act}" onchange="onPermChange()"></label></td>`;
+    }).join('');
+    return`<tr><td><span class="perm-row-label"><span style="font-size:14px">${icon}</span>${mod.label}</span></td>${cells}</tr>`;
+  }).join('');
+}
+
+function onPermChange(){
+  // Quand on modifie manuellement une permission, passer le rôle en "Personnalisé"
+  document.getElementById('u-role').value='vide';
+}
+function applyPreset(){
+  const role=document.getElementById('u-role').value;
+  const preset=PRESETS[role]||{};
+  document.querySelectorAll('#perm-tbody input[type=checkbox]').forEach(cb=>{cb.checked=!!(preset[cb.dataset.mod]?.[cb.dataset.act]);});
+}
+function getPerms(){
+  const p={};
+  document.querySelectorAll('#perm-tbody input[type=checkbox]').forEach(cb=>{if(!p[cb.dataset.mod])p[cb.dataset.mod]={};p[cb.dataset.mod][cb.dataset.act]=cb.checked;});
+  return p;
+}
+function setPerms(perms){
+  document.querySelectorAll('#perm-tbody input[type=checkbox]').forEach(cb=>{cb.checked=!!(perms?.[cb.dataset.mod]?.[cb.dataset.act]);});
+}
+
+// ═══════════════════════════════════════════════════
+//  USERS
+// ═══════════════════════════════════════════════════
+function openUserModal(login){
+  buildPermTable();
+  document.getElementById('user-modal-title').textContent=login?'Modifier l\'utilisateur':'Nouvel utilisateur';
+  document.getElementById('u-edit-login').value=login||'';
+  document.getElementById('u-pass').placeholder=login?'Laisser vide = inchangé':'Mot de passe (requis)';
+  if(login){
+    const u=users.find(x=>x.login===login);if(!u)return;
+    document.getElementById('u-nom').value=u.nom;
+    document.getElementById('u-login').value=u.login;
+    document.getElementById('u-pass').value='';
+    document.getElementById('u-statut').value=u.statut;
+    document.getElementById('u-role').value=u.role||'vide';
+    // Appliquer d'abord le preset du rôle, puis écraser avec les permissions réelles sauvegardées
+    applyPreset();
+    setPerms(u.permissions);
+  }else{
+    ['u-nom','u-login','u-pass'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('u-statut').value='actif';
+    // Définir le rôle AVANT d'appliquer le preset
+    document.getElementById('u-role').value='eleveur';
+    applyPreset();
+  }
+  document.getElementById('modal-user').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function saveUser(){
+  const editL=document.getElementById('u-edit-login').value;
+  if(!can('utilisateurs', editL ? 'edit' : 'create')){alert('Permission refusée.');return;}
+  const nom=document.getElementById('u-nom').value.trim();
+  const login=document.getElementById('u-login').value.trim().toLowerCase().replace(/\s+/g,'.');
+  const pass=document.getElementById('u-pass').value;
+  const role=document.getElementById('u-role').value||'vide';
+  const statut=document.getElementById('u-statut').value;
+  if(!nom||!login){alert('Nom et nom d\'utilisateur requis.');return;}
+  if(!editL&&!pass){alert('Le mot de passe est requis pour un nouvel utilisateur.');return;}
+  if(pass && pass.length < 6){alert('Le mot de passe doit contenir au moins 6 caractères.');return;}
+  if(login!==editL&&users.find(u=>u.login===login)){alert(`"${login}" est déjà utilisé.`);return;}
+  const permissions=getPerms();
+  if(editL){
+    const idx=users.findIndex(u=>u.login===editL);if(idx<0)return;
+    users[idx]={...users[idx],nom,login,role,statut,permissions};
+    if(pass)users[idx].pass=btoa(pass);
+    if(currentUser?.login===editL){currentUser=users[idx];updateTopbar();applyNavPerms();}
+    // Si le login a changé, supprimer l'ancien enregistrement Supabase
+    if(login!==editL) deleteItem(TABLES.users, editL);
+    log(`Utilisateur @${login} modifié`);
+  }else{
+    users.push({nom,login,pass:btoa(pass),role,statut,permissions,createdAt:new Date().toISOString()});
+    log(`Utilisateur @${login} créé`);
+  }
+  persist();closeModal('modal-user');renderUsers();applyNavPerms();
+}
+function deleteUser(login){
+  if(!can('utilisateurs','delete')){alert('Permission refusée.');return;}
+  if(currentUser?.login===login){alert('Impossible de supprimer votre propre compte.');return;}
+  const admins=users.filter(x=>x.role==='admin'&&x.statut==='actif');
+  const u=users.find(x=>x.login===login);
+  if(u?.role==='admin'&&admins.length<=1){alert('Impossible de supprimer le dernier administrateur actif.');return;}
+  if(!confirm(`Supprimer "${u?.nom||login}" ?`))return;
+  users=users.filter(x=>x.login!==login);
+  log(`Utilisateur @${login} supprimé`);
+  deleteItem(TABLES.users, login);
+  persist();renderUsers();
+}
+function renderUsers(){
+  const el=document.getElementById('users-list');
+  if(!can('utilisateurs','read')){el.innerHTML='<div class="access-denied"><div class="lock">🔒</div><p>Accès refusé</p></div>';return;}
+  if(!users.length){el.innerHTML='<div class="empty-state">Aucun utilisateur</div>';return;}
+  const isAdmin=currentUser?.role==='admin';
+  const cE=isAdmin||can('utilisateurs','edit');
+  const cD=isAdmin||can('utilisateurs','delete');
+  el.innerHTML=users.map(u=>{
+    const meta=ROLE_META[u.role]||ROLE_META.vide;
+    const pc=Object.values(u.permissions||{}).reduce((t,m)=>t+Object.values(m).filter(Boolean).length,0);
+    const isSelf=u.login===currentUser?.login;
+    const safeLogin=esc(u.login); // pour affichage
+    const attrLogin=u.login.replace(/'/g,"\\'"); // pour onclick attr (login est déjà sanitisé à la saisie)
+    return`<div class="user-card">
+      <div class="avatar" style="background:${meta.bg};color:${meta.color};width:40px;height:40px;font-size:14px">${esc(ini(u.nom))}</div>
+      <div class="user-card-body">
+        <div class="user-card-name">${esc(u.nom)}<span class="badge" style="background:${meta.bg};color:${meta.color}">${esc(meta.label)}</span>${u.statut==='inactif'?'<span class="badge badge-red">Inactif</span>':''}${isSelf?'<span class="badge badge-green">Vous</span>':''}</div>
+        <div class="user-card-meta">@${safeLogin} · ${pc} perm. · ${u.createdAt?fmtDate(u.createdAt):'—'}</div>
+      </div>
+      <div class="user-card-actions">
+        ${cE?`<button class="btn btn-sm" onclick="openUserModal('${attrLogin}')">✏️ Modifier</button>`:''}
+        ${cD&&!isSelf?`<button class="btn btn-sm btn-danger" onclick="deleteUser('${attrLogin}')">🗑 Suppr.</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  PORCS
+// ═══════════════════════════════════════════════════
+function savePorc(){
+  const idx=parseInt(document.getElementById('p-idx').value);
+  if(!can('porcs',idx>=0?'edit':'create')){alert('Permission refusée.');return;}
+  const autoId='P'+Date.now().toString(36).toUpperCase().slice(-5);
+  const p={id:document.getElementById('p-id').value.trim()||autoId,nom:document.getElementById('p-nom').value.trim(),sexe:document.getElementById('p-sexe').value,race:document.getElementById('p-race').value.trim(),naissance:document.getElementById('p-naissance').value,poids:parseFloat(document.getElementById('p-poids').value)||0,origine:document.getElementById('p-origine').value.trim(),statut:document.getElementById('p-statut').value,notes:document.getElementById('p-notes').value.trim()};
+  // Vérifier l'unicité de l'ID en mode création
+  if(idx<0 && porcs.find(x=>x.id===p.id)){alert(`L'ID "${p.id}" est déjà utilisé par un autre porc.`);return;}
+  if(idx>=0){porcs[idx]=p;log(`Porc ${p.nom||p.id} modifié`);}else{porcs.push(p);log(`Porc ${p.nom||p.id} ajouté`);}
+  persist();closeModal('modal-porc');renderPorcs();renderDashboard();
+}
+function editPorc(idx){
+  if(!can('porcs','edit')){alert('Permission refusée.');return;}
+  const p=porcs[idx];
+  if(!p){console.error('editPorc: index invalide',idx);return;}
+  document.getElementById('modal-porc-title').textContent='Modifier le porc';
+  document.getElementById('p-idx').value=idx;
+  ['id','nom','sexe','race','naissance','poids','origine','statut','notes'].forEach(k=>{const el=document.getElementById('p-'+k);if(el)el.value=p[k]||'';});
+  openModal('modal-porc');
+}
+function deletePorc(idx){
+  if(!can('porcs','delete')){alert('Permission refusée.');return;}
+  if(!porcs[idx]){console.error('deletePorc: index invalide',idx);return;}
+  if(!confirm(`Supprimer "${porcs[idx].nom||porcs[idx].id}" ?`))return;
+  log(`Porc ${porcs[idx].nom||porcs[idx].id} supprimé`);porcs.splice(idx,1);persist();renderPorcs();renderDashboard();
+}
+function renderPorcs(){
+  const q=((document.getElementById('search-porc')||{}).value||'').toLowerCase();
+  const tbody=document.getElementById('tb-porcs');
+  // On filtre en conservant l'index RÉEL dans porcs[] pour editPorc/deletePorc
+  const list=porcs.map((p,realIdx)=>({p,realIdx})).filter(({p})=>{
+    if(fSexe&&p.sexe!==fSexe)return false;
+    if(fStatut&&p.statut!==fStatut)return false;
+    if(q&&!(p.id+(p.nom||'')+(p.race||'')).toLowerCase().includes(q))return false;
+    return true;
+  });
+  if(!list.length){tbody.innerHTML='<tr><td colspan="6"><div class="empty-state">Aucun porc trouvé</div></td></tr>';return;}
+  const col={male:'#3b82f6',femelle:'#ec4899'};
+  const cE=can('porcs','edit'),cD=can('porcs','delete');
+  tbody.innerHTML=list.map(({p,realIdx})=>{
+    const bc=p.statut==='actif'?'badge-green':p.statut==='vendu'?'badge-amber':'badge-red';
+    const mois=p.naissance?(()=>{const d=new Date(p.naissance);if(isNaN(d))return null;const m=Math.floor((Date.now()-d)/(1000*60*60*24*30));return m>=0?m:null;})():null;
+    return`<tr><td><div class="pig-row"><div class="avatar" style="background:${col[p.sexe]||'#888'}22;color:${col[p.sexe]||'#888'};width:32px;height:32px;font-size:11px">${esc((p.nom||p.id).substring(0,2).toUpperCase())}</div><div><div style="font-weight:600;font-size:13px">${esc(p.nom||p.id)}</div><div style="font-size:11px;color:var(--text3)">${esc(p.id)}</div></div></div></td><td>${p.sexe==='male'?'Verrat':'Truie'}</td><td>${esc(p.race||'—')}</td><td>${p.poids?esc(p.poids)+' kg':'—'}${mois!==null?`<div style="font-size:10px;color:var(--text3)">${mois}m</div>`:''}</td><td><span class="badge ${bc}">${esc(p.statut)}</span></td><td>${cE?`<button class="btn btn-sm" onclick="editPorc(${realIdx})">Modif.</button> `:''}${cD?`<button class="btn btn-sm btn-danger" onclick="deletePorc(${realIdx})">✕</button>`:''}${!cE&&!cD?'<span style="color:var(--text3);font-size:11px">Lecture</span>':''}</td></tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  CROISEMENTS
+// ═══════════════════════════════════════════════════
+function saveCroisement(){
+  if(!can('reproduction','create')){alert('Permission refusée.');return;}
+  const truieId=document.getElementById('c-truie').value,verratId=document.getElementById('c-verrat').value,date=document.getElementById('c-date').value;
+  if(!date||!truieId){alert('Truie et date requises.');return;}
+  const truie=porcs.find(p=>p.id===truieId),verrat=porcs.find(p=>p.id===verratId);
+  const mb=new Date(date);mb.setDate(mb.getDate()+114);
+  croisements.push({id:'CR'+Date.now(),date,truieId,verratId,truieNom:truie?(truie.nom||truie.id):truieId,verratNom:verrat?(verrat.nom||verrat.id):verratId,miseBas:mb.toISOString().split('T')[0],methode:document.getElementById('c-methode').value,notes:document.getElementById('c-notes').value.trim()});
+  log(`Croisement ${truie?.nom||truieId} × ${verrat?.nom||verratId}`);
+  persist();closeModal('modal-croisement');renderCroisements();renderDashboard();
+}
+function renderCroisements(){
+  const tbody=document.getElementById('tb-croisements');
+  if(!croisements.length){tbody.innerHTML='<tr><td colspan="6"><div class="empty-state">Aucun croisement enregistré</div></td></tr>';return;}
+  const today=new Date();
+  tbody.innerHTML=croisements.map(c=>{
+    const mb=new Date(c.miseBas),j=Math.ceil((mb-today)/(1000*60*60*24));
+    const cl=j<0?'badge-red':j<14?'badge-amber':'badge-blue';
+    const tx=j<0?'dépassé':j===0?'Aujourd\'hui':`J-${j}`;
+    return`<tr><td>${fmtDate(c.date)}</td><td>${esc(c.truieNom)}</td><td>${esc(c.verratNom)}</td><td>${esc(c.methode)}</td><td>${fmtDate(c.miseBas)}</td><td><span class="badge ${cl}">${tx}</span></td></tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  PORTEES
+// ═══════════════════════════════════════════════════
+function savePortee(){
+  if(!can('portees','create')){alert('Permission refusée.');return;}
+  const mereId=document.getElementById('pt-mere').value,pereId=document.getElementById('pt-pere').value,date=document.getElementById('pt-date').value;
+  if(!date){alert('Date requise.');return;}
+  const mere=porcs.find(p=>p.id===mereId),pere=porcs.find(p=>p.id===pereId);
+  const sev=new Date(date);sev.setDate(sev.getDate()+28);
+  const vivants=parseInt(document.getElementById('pt-vivants').value)||0;
+  portees.push({id:'PT'+Date.now(),date,mereId,pereId,mereNom:mere?(mere.nom||mere.id):mereId,pereNom:pere?(pere.nom||pere.id):pereId,vivants,morts:parseInt(document.getElementById('pt-morts').value)||0,poids:parseFloat(document.getElementById('pt-poids').value)||0,sevrage:sev.toISOString().split('T')[0],notes:document.getElementById('pt-notes').value.trim()});
+  log(`Portée de ${mere?.nom||mereId} : ${vivants} porcelets`);
+  persist();closeModal('modal-portee');renderPortees();renderDashboard();
+}
+function renderPortees(){
+  const tbody=document.getElementById('tb-portees');
+  if(!portees.length){tbody.innerHTML='<tr><td colspan="7"><div class="empty-state">Aucune portée enregistrée</div></td></tr>';return;}
+  tbody.innerHTML=portees.map(pt=>{
+    const vivants=parseInt(pt.vivants)||0,morts=parseInt(pt.morts)||0;
+    const total=vivants+morts,taux=total>0?Math.round(vivants/total*100):0;
+    return`<tr><td>${fmtDate(pt.date)}</td><td>${esc(pt.mereNom)}</td><td>${esc(pt.pereNom)}</td><td><b style="color:var(--success)">${parseInt(pt.vivants)||0}</b></td><td style="color:var(--danger)">${parseInt(pt.morts)||0}</td><td>${fmtDate(pt.sevrage)}</td><td><div style="font-size:11px;color:var(--text3)">${taux}%</div><div class="progress-bar" style="width:70px"><div class="progress-fill" style="width:${taux}%"></div></div></td></tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  SANTE
+// ═══════════════════════════════════════════════════
+function saveSante(){
+  if(!can('sante','create')){alert('Permission refusée.');return;}
+  const date=document.getElementById('s-date').value;
+  if(!date){alert('La date est requise.');return;}
+  const porcId=document.getElementById('s-porc').value,porcNom=document.getElementById('s-porc').selectedOptions[0]?.text||porcId;
+  sante.push({id:'SN'+Date.now(),date,porcId,porcNom,type:document.getElementById('s-type').value,desc:document.getElementById('s-desc').value.trim(),vet:document.getElementById('s-vet').value.trim(),cout:parseFloat(document.getElementById('s-cout').value)||0,statut:document.getElementById('s-statut').value,notes:document.getElementById('s-notes').value.trim()});
+  log(`Santé: ${document.getElementById('s-type').value} — ${porcNom}`);
+  persist();closeModal('modal-sante');renderSante();renderDashboard();
+}
+function renderSante(){
+  const tbody=document.getElementById('tb-sante');
+  const list=sante.filter(s=>{if(fSanteT&&s.type!==fSanteT)return false;if(fSanteS&&s.statut!==fSanteS)return false;return true;});
+  if(!list.length){tbody.innerHTML='<tr><td colspan="6"><div class="empty-state">Aucun événement</div></td></tr>';return;}
+  const tB={vaccination:'badge-blue',traitement:'badge-amber','contrôle':'badge-green',chirurgie:'badge-red'};
+  const sB={'planifié':'badge-amber','effectué':'badge-green','en cours':'badge-blue'};
+  tbody.innerHTML=list.map(s=>`<tr><td>${s.date?new Date(s.date).toLocaleDateString('fr-FR'):'—'}</td><td>${esc(s.porcNom)}</td><td><span class="badge ${tB[s.type]||'badge-gray'}">${esc(s.type)}</span></td><td style="font-size:12px">${esc(s.desc||'—')}</td><td>${s.cout?s.cout.toLocaleString('fr-FR')+' F':'—'}</td><td><span class="badge ${sB[s.statut]||'badge-gray'}">${esc(s.statut)}</span></td></tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  VENTES
+// ═══════════════════════════════════════════════════
+function saveVente(){
+  if(!can('ventes','create')){alert('Permission refusée.');return;}
+  const porcId=document.getElementById('vt-porc').value;
+  const date=document.getElementById('vt-date').value;
+  if(!porcId){alert('Veuillez sélectionner un porc.');return;}
+  if(!date){alert('La date est requise.');return;}
+  const porc=porcs.find(p=>p.id===porcId);
+  const prix=parseFloat(document.getElementById('vt-prix').value)||0;
+  ventes.push({id:'VT'+Date.now(),date,porcId,porcNom:porc?(porc.nom||porc.id):porcId,acheteur:document.getElementById('vt-acheteur').value.trim(),poids:parseFloat(document.getElementById('vt-poids').value)||0,prix,mode:document.getElementById('vt-mode').value,statut:document.getElementById('vt-statut').value,notes:document.getElementById('vt-notes').value.trim()});
+  if(porc){porc.statut='vendu';upsertItem(TABLES.porcs,{...porc,id:porc.id});}
+  log(`Vente: ${porc?.nom||porcId} → ${document.getElementById('vt-acheteur').value||'?'} — ${prix.toLocaleString('fr-FR')} F`);
+  persist();closeModal('modal-vente');renderVentes();renderDashboard();
+}
+function renderVentes(){
+  const total=ventes.reduce((s,v)=>s+(parseFloat(v.prix)||0),0),moyen=ventes.length?Math.round(total/ventes.length):0;
+  document.getElementById('v-ct').textContent=ventes.length;
+  document.getElementById('v-rev').textContent=total.toLocaleString('fr-FR')+' F';
+  document.getElementById('v-moy').textContent=moyen.toLocaleString('fr-FR')+' F';
+  const tbody=document.getElementById('tb-ventes');
+  if(!ventes.length){tbody.innerHTML='<tr><td colspan="6"><div class="empty-state">Aucune vente</div></td></tr>';return;}
+  const sB={payé:'badge-green',partiel:'badge-amber','en attente':'badge-red'};
+  tbody.innerHTML=ventes.map(v=>`<tr><td>${v.date?new Date(v.date).toLocaleDateString('fr-FR'):'—'}</td><td>${esc(v.porcNom)}</td><td>${esc(v.acheteur||'—')}</td><td style="font-weight:600">${(parseFloat(v.prix)||0).toLocaleString('fr-FR')} F</td><td>${esc(v.mode)}</td><td><span class="badge ${sB[v.statut]||'badge-gray'}">${esc(v.statut)}</span></td></tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════
+function renderDashboard(){
+  const today=new Date(),m=today.getMonth(),y=today.getFullYear();
+  const actifs=porcs.filter(p=>p.statut==='actif');
+  const naiss=portees.filter(pt=>{if(!pt.date)return false;const d=new Date(pt.date);return!isNaN(d)&&d.getMonth()===m&&d.getFullYear()===y;}).reduce((s,pt)=>s+(parseInt(pt.vivants)||0),0);
+  const rev=ventes.reduce((s,v)=>s+(parseFloat(v.prix)||0),0);
+  document.getElementById('s-total').textContent=actifs.length;
+  document.getElementById('s-truies').textContent=actifs.filter(p=>p.sexe==='femelle').length;
+  document.getElementById('s-naiss').textContent=naiss;
+  document.getElementById('s-rev').textContent=rev.toLocaleString('fr-FR')+' F';
+  const alertes=sante.filter(s=>s.statut==='planifié');
+  document.getElementById('d-alerte-ct').textContent=alertes.length;
+  document.getElementById('d-alertes').innerHTML=alertes.length?alertes.slice(0,4).map(a=>`<div class="health-event"><div class="health-dot" style="background:#f59e0b"></div><div><div style="font-size:13px;font-weight:600">${esc(a.porcNom)}</div><div style="font-size:12px;color:var(--text3)">${esc(a.type)} — ${a.date?fmtDate(a.date):'—'}</div></div></div>`).join(''):'<div class="empty-state">Aucune alerte</div>';
+  const gest=croisements.filter(c=>new Date(c.miseBas)>today).sort((a,b)=>new Date(a.miseBas)-new Date(b.miseBas));
+  document.getElementById('d-misesbas').innerHTML=gest.length?gest.slice(0,5).map(g=>{const j=Math.ceil((new Date(g.miseBas)-today)/(1000*60*60*24));return`<div class="timeline-item"><span style="color:var(--text3);min-width:45px;font-size:12px">J-${j}</span><span style="flex:1">${esc(g.truieNom)}</span><span style="color:var(--text3);font-size:11px">${fmtDate(g.miseBas)}</span></div>`;}).join(''):'<div class="empty-state">Aucune gestation</div>';
+  document.getElementById('d-activite').innerHTML=activite.length?activite.slice(0,8).map(a=>`<div class="timeline-item"><span style="color:var(--text3);min-width:72px;font-size:11px">${esc(a.date)}</span><span style="flex:1;font-size:13px">${esc(a.msg)}</span><span style="color:var(--text3);font-size:11px">@${esc(a.by||'?')}</span></div>`).join(''):'<div class="empty-state">Aucune activité</div>';
+}
+
+// ═══════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════
+function renderStats(){
+  const actifs=porcs.filter(p=>p.statut==='actif');
+  const tn=portees.reduce((s,pt)=>s+(parseInt(pt.vivants)||0),0),tv=ventes.reduce((s,v)=>s+(parseFloat(v.prix)||0),0),tc=sante.reduce((s,sv)=>s+(parseFloat(sv.cout)||0),0),bn=tv-tc;
+  document.getElementById('stats-kpi').innerHTML=`<div class="metric"><div class="metric-label">Troupeau actif</div><div class="metric-value">${actifs.length}</div></div><div class="metric"><div class="metric-label">Naissances</div><div class="metric-value">${tn}</div></div><div class="metric"><div class="metric-label">Revenus ventes</div><div class="metric-value">${tv.toLocaleString('fr-FR')} F</div></div><div class="metric"><div class="metric-label">Bénéfice net</div><div class="metric-value" style="color:${bn>=0?'var(--success)':'var(--danger)'}">${bn.toLocaleString('fr-FR')} F</div></div>`;
+  const ts=portees.length?Math.round(portees.reduce((s,pt)=>{const v=parseInt(pt.vivants)||0,mo=parseInt(pt.morts)||0;return s+(v/(v+mo||1));},0)/portees.length*100):0;
+  document.getElementById('stats-det').innerHTML=`<div class="grid-3"><div><div class="section-title">Reproduction</div><table class="stat-table"><tr><td>Croisements</td><td>${croisements.length}</td></tr><tr><td>Portées</td><td>${portees.length}</td></tr><tr><td>Moy. porc./portée</td><td>${portees.length?(tn/portees.length).toFixed(1):'0'}</td></tr><tr><td>Taux survie</td><td>${ts}%</td></tr></table></div><div><div class="section-title">Santé</div><table class="stat-table"><tr><td>Événements</td><td>${sante.length}</td></tr><tr><td>Vaccinations</td><td>${sante.filter(s=>s.type==='vaccination').length}</td></tr><tr><td>Traitements</td><td>${sante.filter(s=>s.type==='traitement').length}</td></tr><tr><td>Coûts vét.</td><td>${tc.toLocaleString('fr-FR')} F</td></tr></table></div><div><div class="section-title">Commerce</div><table class="stat-table"><tr><td>Ventes</td><td>${ventes.length}</td></tr><tr><td>Prix moyen</td><td>${ventes.length?Math.round(tv/ventes.length).toLocaleString('fr-FR')+' F':'0 F'}</td></tr><tr><td>Revenus</td><td>${tv.toLocaleString('fr-FR')} F</td></tr><tr><td style="color:${bn>=0?'var(--success)':'var(--danger)'}">Bénéfice</td><td style="color:${bn>=0?'var(--success)':'var(--danger)'}">${bn.toLocaleString('fr-FR')} F</td></tr></table></div></div>`;
+  const mv={};ventes.forEach(v=>{if(!v.date)return;const k=v.date.substring(0,7);mv[k]=(mv[k]||0)+(parseFloat(v.prix)||0);});
+  const lv=Object.keys(mv).sort().slice(-8),dv=lv.map(k=>mv[k]);
+  setTimeout(()=>{
+    if(chartV){chartV.destroy();chartV=null;}
+    if(chartT){chartT.destroy();chartT=null;}
+    const ctxV=document.getElementById('chart-v');
+    if(ctxV)chartV=new Chart(ctxV,{type:'bar',data:{labels:lv.map(l=>{const d=new Date(l+'-01');return d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'});}),datasets:[{label:'FCFA',data:dv,backgroundColor:'#c8762a',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v.toLocaleString('fr-FR')}}}}});
+    const ctxT=document.getElementById('chart-t');
+    if(ctxT)chartT=new Chart(ctxT,{type:'doughnut',data:{labels:['Verrats','Truies','Vendus','Décédés'],datasets:[{data:[actifs.filter(p=>p.sexe==='male').length,actifs.filter(p=>p.sexe==='femelle').length,porcs.filter(p=>p.statut==='vendu').length,porcs.filter(p=>p.statut==='décédé').length],backgroundColor:['#3b82f6','#ec4899','#f59e0b','#6b7280'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'right',labels:{font:{size:11},padding:10}}}}});
+  },80);
+}
+
+// ═══════════════════════════════════════════════════
+//  STOCKS
+// ═══════════════════════════════════════════════════
+function stockActuel(alimId){
+  const al=aliments.find(a=>a.id===alimId);if(!al)return 0;
+  return mouvements.filter(m=>m.alimId===alimId).reduce((s,m)=>{const q=parseFloat(m.qte)||0;return m.type==='entree'?s+q:s-q;},(parseFloat(al.stockInitial)||0));
+}
+function niveauStock(stock,seuil){
+  if(stock<=0)return{label:'Rupture',cls:'badge-red',barColor:'#e24b4a',pct:0};
+  if(stock<=seuil)return{label:'Critique',cls:'stock-badge-crit',barColor:'#e24b4a',pct:Math.min(100,Math.round(stock/seuil*50))};
+  if(stock<=seuil*1.5)return{label:'Faible',cls:'stock-badge-low',barColor:'#f59e0b',pct:Math.min(100,Math.round(stock/seuil*70))};
+  return{label:'Normal',cls:'stock-badge-ok',barColor:'#3d9e3d',pct:100};
+}
+function saveAlim(){
+  const idx=parseInt(document.getElementById('al-idx').value);
+  if(!can('stocks',idx>=0?'edit':'create')){alert('Permission refusée.');return;}
+  const al={id:idx>=0?aliments[idx].id:'AL'+Date.now(),nom:document.getElementById('al-nom').value.trim(),cat:document.getElementById('al-cat').value,stockInitial:parseFloat(document.getElementById('al-stock').value)||0,seuil:parseFloat(document.getElementById('al-seuil').value)||50,prixUnit:parseFloat(document.getElementById('al-prix').value)||0,fournisseur:document.getElementById('al-fournisseur').value.trim(),notes:document.getElementById('al-notes').value.trim(),createdAt:idx>=0?aliments[idx].createdAt:new Date().toISOString()};
+  if(!al.nom){alert('Nom requis.');return;}
+  if(idx>=0){aliments[idx]=al;log(`Aliment "${al.nom}" modifié`);}else{aliments.push(al);log(`Aliment "${al.nom}" ajouté`);}
+  persist();closeModal('modal-alim');renderStocks();
+}
+function editAlim(idx){
+  if(!can('stocks','edit')){alert('Permission refusée.');return;}
+  const al=aliments[idx];
+  if(!al){console.error('editAlim: index invalide',idx);return;}
+  document.getElementById('alim-modal-title').textContent='Modifier l\'aliment';
+  document.getElementById('al-idx').value=idx;
+  document.getElementById('al-nom').value=al.nom;
+  document.getElementById('al-cat').value=al.cat;
+  document.getElementById('al-stock').value=al.stockInitial;
+  document.getElementById('al-seuil').value=al.seuil;
+  document.getElementById('al-prix').value=al.prixUnit;
+  document.getElementById('al-fournisseur').value=al.fournisseur||'';
+  document.getElementById('al-notes').value=al.notes||'';
+  openModal('modal-alim');
+}
+function deleteAlim(idx){
+  if(!can('stocks','delete')){alert('Permission refusée.');return;}
+  if(!aliments[idx]){console.error('deleteAlim: index invalide',idx);return;}
+  if(!confirm(`Supprimer "${aliments[idx].nom}" ?`))return;
+  const al=aliments[idx]; // ← capturer AVANT splice
+  const id=al.id;
+  mouvements=mouvements.filter(m=>m.alimId!==id);
+  aliments.splice(idx,1);
+  log(`Aliment "${al.nom||id}" supprimé`); // ← utiliser la référence capturée
+  deleteItem(TABLES.aliments, id); // ← supprimer aussi dans Supabase (manquait !)
+  persist();renderStocks();
+}
+function openMvtModal(type){
+  if(!can('stocks','create')){alert('Permission refusée.');return;}
+  document.getElementById('mvt-type').value=type;
+  document.getElementById('mvt-modal-title').textContent=type==='entree'?'Entrée de stock':'Sortie / Consommation';
+  document.getElementById('mvt-motif-label').textContent=type==='entree'?'Fournisseur / Référence':'Motif (alimentation, perte…)';
+  ['mvt-qte','mvt-prix','mvt-total','mvt-motif','mvt-notes'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('mvt-date').value=new Date().toISOString().split('T')[0];
+  const sel=document.getElementById('mvt-alim');
+  sel.innerHTML=aliments.length?aliments.map(a=>`<option value="${esc(a.id)}">${esc(a.nom)} (${stockActuel(a.id).toFixed(1)} kg)</option>`).join(''):'<option value="">— Aucun aliment —</option>';
+  openModal('modal-mvt');
+}
+function calcMvtTotal(){
+  const qte=parseFloat(document.getElementById('mvt-qte').value)||0;
+  const pu=parseFloat(document.getElementById('mvt-prix').value)||0;
+  document.getElementById('mvt-total').value=(qte*pu).toFixed(0);
+}
+function saveMvt(){
+  const alimId=document.getElementById('mvt-alim').value,qte=parseFloat(document.getElementById('mvt-qte').value)||0,type=document.getElementById('mvt-type').value;
+  if(!alimId||!qte){alert('Aliment et quantité requis.');return;}
+  const al=aliments.find(a=>a.id===alimId);
+  if(type==='sortie'&&qte>stockActuel(alimId)){alert(`Stock insuffisant ! Disponible : ${stockActuel(alimId).toFixed(1)} kg`);return;}
+  const prix=parseFloat(document.getElementById('mvt-prix').value)||0;
+  const stockApr=stockActuel(alimId)+(type==='entree'?qte:-qte);
+  mouvements.push({id:'M'+Date.now(),date:document.getElementById('mvt-date').value,alimId,alimNom:al?.nom||'?',type,qte,prixUnit:prix,montant:qte*prix,motif:document.getElementById('mvt-motif').value.trim(),notes:document.getElementById('mvt-notes').value.trim(),stockApres:stockApr});
+  log(`${type==='entree'?'Entrée':'Sortie'} stock : ${qte} kg de ${al?.nom||'?'}`);
+  persist();closeModal('modal-mvt');renderStocks();
+}
+function renderStocks(){
+  const totalValeur=aliments.reduce((s,al)=>s+stockActuel(al.id)*(al.prixUnit||0),0);
+  const enAlerte=aliments.filter(al=>stockActuel(al.id)<=al.seuil).length;
+  const totalEntrees=mouvements.filter(m=>m.type==='entree').reduce((s,m)=>s+m.montant,0);
+  document.getElementById('stk-kpi').innerHTML=`<div class="metric"><div class="metric-label">Aliments</div><div class="metric-value">${aliments.length}</div><div class="metric-sub">références</div></div><div class="metric"><div class="metric-label">Valeur stock</div><div class="metric-value">${Math.round(totalValeur).toLocaleString('fr-FR')} F</div></div><div class="metric"><div class="metric-label">En alerte</div><div class="metric-value" style="color:${enAlerte>0?'var(--danger)':'var(--success)'}">${enAlerte}</div></div><div class="metric"><div class="metric-label">Achats cumulés</div><div class="metric-value">${Math.round(totalEntrees).toLocaleString('fr-FR')} F</div></div>`;
+  const cE=can('stocks','edit'),cD=can('stocks','delete');
+  document.getElementById('alim-list').innerHTML=aliments.length?aliments.map((al,idx)=>{
+    const st=stockActuel(al.id),nv=niveauStock(st,al.seuil);
+    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)"><div class="alim-icon">${CAT_ICONS[al.cat]||'📦'}</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${esc(al.nom)}<span class="badge ${nv.cls}" style="font-size:10px">${nv.label}</span></div><div style="font-size:11px;color:var(--text3)">${esc(al.cat)} · Seuil: ${al.seuil} kg · ${al.prixUnit?al.prixUnit.toLocaleString('fr-FR')+' F/kg':'n.d.'}</div><div class="stock-bar-wrap" style="margin-top:4px"><div class="stock-bar"><div class="stock-bar-fill" style="width:${nv.pct}%;background:${nv.barColor}"></div></div><span style="font-size:12px;font-weight:700;min-width:55px;text-align:right">${st.toFixed(1)} kg</span></div></div><div style="display:flex;flex-direction:column;gap:3px">${cE?`<button class="btn btn-sm" onclick="editAlim(${idx})">Modif.</button>`:''}${cD?`<button class="btn btn-sm btn-danger" onclick="deleteAlim(${idx})">✕</button>`:''}</div></div>`;
+  }).join(''):'<div class="empty-state">Aucun aliment dans le catalogue</div>';
+  const alertes=aliments.filter(al=>stockActuel(al.id)<=al.seuil);
+  document.getElementById('stk-alerte-ct').textContent=alertes.length;
+  document.getElementById('stk-alertes').innerHTML=alertes.length?alertes.map(al=>{const st=stockActuel(al.id);return`<div class="health-event"><div class="health-dot" style="background:${st<=0?'#e24b4a':'#f59e0b'}"></div><div><div style="font-size:13px;font-weight:600">${esc(al.nom)}</div><div style="font-size:12px;color:var(--text3)">${st<=0?'Rupture totale':'Stock bas'} — ${st.toFixed(1)} kg / seuil ${al.seuil} kg</div></div></div>`;}).join(''):'<div class="empty-state">Tous les stocks sont suffisants</div>';
+  const fAlimSel=document.getElementById('stk-filter-alim');const prev=fAlimSel.value;
+  fAlimSel.innerHTML='<option value="">Tous les aliments</option>'+aliments.map(a=>`<option value="${esc(a.id)}">${esc(a.nom)}</option>`).join('');
+  if(prev)fAlimSel.value=prev;
+  renderMvts();renderChartConso();
+}
+function renderMvts(){
+  const fA=(document.getElementById('stk-filter-alim')||{}).value||'',fT=(document.getElementById('stk-filter-type')||{}).value||'';
+  const tbody=document.getElementById('tb-mvts');
+  const list=[...mouvements].filter(m=>{if(fA&&m.alimId!==fA)return false;if(fT&&m.type!==fT)return false;return true;}).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!list.length){tbody.innerHTML='<tr><td colspan="7"><div class="empty-state">Aucun mouvement</div></td></tr>';return;}
+  tbody.innerHTML=list.map(m=>{const isE=m.type==='entree';const qte=parseFloat(m.qte)||0;const stockAp=parseFloat(m.stockApres);return`<tr><td>${m.date?new Date(m.date).toLocaleDateString('fr-FR'):'—'}</td><td><b>${esc(m.alimNom)}</b></td><td><span class="${isE?'mvt-in':'mvt-out'}">${isE?'▲':'▼'} ${isE?'Entrée':'Sortie'}</span></td><td class="${isE?'mvt-in':'mvt-out'}">${isE?'+':'−'}${qte.toFixed(1)} kg</td><td>${m.montant?Math.round(m.montant).toLocaleString('fr-FR')+' F':'—'}</td><td style="font-size:11px;color:var(--text3)">${esc(m.motif||'—')}</td><td style="font-weight:600">${!isNaN(stockAp)?stockAp.toFixed(1)+' kg':'—'}</td></tr>`;}).join('');
+}
+function renderChartConso(){
+  const today=new Date(),mois=[];
+  for(let i=5;i>=0;i--){const d=new Date(today.getFullYear(),today.getMonth()-i,1);mois.push(d.toISOString().substring(0,7));}
+  const colors=['#c8762a','#3b82f6','#2d7a2d','#ec4899','#8a2d8a','#0d7a6e'];
+  const datasets=aliments.slice(0,6).map((al,i)=>({label:al.nom,data:mois.map(m=>mouvements.filter(mv=>mv.alimId===al.id&&mv.type==='sortie'&&mv.date&&mv.date.substring(0,7)===m).reduce((s,mv)=>s+mv.qte,0)),backgroundColor:colors[i%colors.length]+'cc',borderRadius:3}));
+  setTimeout(()=>{
+    if(chartConso){chartConso.destroy();chartConso=null;}
+    const ctx=document.getElementById('chart-conso');
+    if(!ctx||!aliments.length)return;
+    chartConso=new Chart(ctx,{type:'bar',data:{labels:mois.map(m=>{const d=new Date(m+'-01');return d.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'});}),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>v+' kg'}}}}});
+  },80);
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT (démarrage différé — attend Supabase)
+// ═══════════════════════════════════════════════════
+// L'init réelle est dans le bloc Supabase ci-dessous
+</script>
+
+<!-- ═══ SUPABASE — fetch() direct avec mode:cors explicite ═══════════════════ -->
+<!-- Le SDK Supabase v2 (toutes versions) utilise postMessage() en interne pour  -->
+<!-- coordonner les requêtes entre onglets. postMessage() exige le structured    -->
+<!-- clone algorithm qui NE PEUT PAS cloner un objet Headers HTTP.              -->
+<!-- → DataCloneError inévitable avec le SDK, quelle que soit la config auth.   -->
+<!--                                                        -->
+<!-- Supabase : fetch() natif pur — sans SDK, sans Worker  -->
+<script>
+'use strict';
+
+const SUPA_URL = "https://kerzrqmmmelnblaturin.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlcnpycW1tbWVsbmJsYXR1cmluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1ODA0MTcsImV4cCI6MjA5MTE1NjQxN30.0c8SAgNvA27ofd4chZaSdE5KVzVeSh5lpitF7J8UArY";
+const REST     = SUPA_URL + '/rest/v1';
+
+const TABLES = {
+  users:       'pcrm_users',
+  porcs:       'pcrm_porcs',
+  croisements: 'pcrm_croisements',
+  portees:     'pcrm_portees',
+  sante:       'pcrm_sante',
+  ventes:      'pcrm_ventes',
+  activite:    'pcrm_activite',
+  aliments:    'pcrm_aliments',
+  mouvements:  'pcrm_mouvements',
+};
+
+// ── Bannière statut sync ──────────────────────────────
+function showSyncStatus(msg, type='info'){
+  let bar = document.getElementById('sync-bar');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'sync-bar';
+    bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:7px 14px;font-size:13px;text-align:center;transition:opacity .4s';
+    document.body.appendChild(bar);
+  }
+  const colors = {info:'#1a5fa8', ok:'#2d7a2d', error:'#b52a2a'};
+  const bgs    = {info:'#e6f0fb', ok:'#eaf5e8', error:'#fdeaea'};
+  bar.style.background = bgs[type]  || bgs.info;
+  bar.style.color      = colors[type] || colors.info;
+  bar.style.opacity    = '1';
+  bar.textContent      = msg;
+  if(type === 'ok') setTimeout(() => { bar.style.opacity = '0'; }, 2500);
+}
+
+// ── Requête Supabase générique ────────────────────────
+async function _supaFetch(url, opts){
+  const method  = (opts && opts.method) ? opts.method : 'GET';
+  const hasBody = !!(opts && opts.body);
+  const headers = {
+    'apikey':        SUPA_KEY,
+    'Authorization': 'Bearer ' + SUPA_KEY,
+    'Accept':        'application/json',
+  };
+  if(hasBody){
+    headers['Content-Type'] = 'application/json';
+    headers['Prefer']       = 'resolution=merge-duplicates,return=minimal';
+  }
+  const res  = await fetch(url, {
+    method:      method,
+    headers:     headers,
+    body:        hasBody ? opts.body : undefined,
+    mode:        'cors',
+    credentials: 'omit',
+    cache:       'no-store',
+  });
+  const text = await res.text();
+  return { ok: res.ok, status: res.status, text: text };
+}
+
+// ── LECTURE ──────────────────────────────────────────
+async function loadFromSupabase(tableName){
+  try{
+    const url = REST + '/' + tableName + '?select=id,data';
+    const { ok, status, text } = await _supaFetch(url);
+    if(!ok){
+      console.warn('Supabase read error (' + tableName + '): HTTP ' + status + ' — ' + text.slice(0,120));
+      return null;
+    }
+    const rows = JSON.parse(text);
+    return Array.isArray(rows) ? rows.map(r => r.data).filter(Boolean) : null;
+  } catch(e){
+    console.warn('Supabase read error (' + tableName + '):', e.message || String(e));
+    return null;
+  }
+}
+
+async function loadActivityFromSupabase(){
+  try{
+    const url = REST + '/' + TABLES.activite + '?select=id,data&id=eq.log';
+    const { ok, status, text } = await _supaFetch(url);
+    if(!ok){
+      console.warn('Supabase activity error: HTTP ' + status + ' — ' + text.slice(0,120));
+      return null;
+    }
+    const rows = JSON.parse(text);
+    const log  = rows && rows[0] && rows[0].data && rows[0].data.log;
+    return Array.isArray(log) ? log : null;
+  } catch(e){
+    console.warn('Supabase activity error:', e.message || String(e));
+    return null;
+  }
+}
+
+// ── ÉCRITURE ─────────────────────────────────────────
+async function upsertItem(tableName, item){
+  try{
+    if(!item?.id && item?.login) item = Object.assign({}, item, { id: item.login });
+    if(!item?.id)                item = Object.assign({}, item, { id: 'singleton' });
+    const payload = JSON.stringify({ id: String(item.id), data: JSON.parse(JSON.stringify(item)) });
+    const url     = REST + '/' + tableName;
+    const { ok, status, text } = await _supaFetch(url, { method: 'POST', body: payload });
+    if(!ok){
+      console.error('Supabase upsert error (' + tableName + '): HTTP ' + status + ' — ' + text.slice(0,120));
+    }
+  } catch(e){
+    console.error('Supabase upsert error (' + tableName + '):', e.message || String(e));
+  }
+}
+
+// ── SUPPRESSION ──────────────────────────────────────
+async function deleteItem(tableName, id){
+  try{
+    const url = REST + '/' + tableName + '?id=eq.' + encodeURIComponent(String(id));
+    const { ok, status, text } = await _supaFetch(url, { method: 'DELETE' });
+    if(!ok){
+      console.error('Supabase delete error (' + tableName + '): HTTP ' + status + ' — ' + text.slice(0,120));
+    }
+  } catch(e){
+    console.error('Supabase delete error:', e.message || String(e));
+  }
+}
+
+// ────────────────────────────────────────────────────────
+//  PERSIST — remplace l'ancien localStorage-only
+//  On conserve localStorage comme cache offline
+// ────────────────────────────────────────────────────────
+// IMPORTANT: on redéfinit persist() directement (pas via window.persist)
+// car les fonctions saveX() appellent persist() par nom de variable locale.
+async function persistAll(){
+  // 1. Sauvegarde locale immédiate
+  try{
+    localStorage.setItem('pcrm_users',       JSON.stringify(users));
+    localStorage.setItem('pcrm_porcs',       JSON.stringify(porcs));
+    localStorage.setItem('pcrm_croisements', JSON.stringify(croisements));
+    localStorage.setItem('pcrm_portees',     JSON.stringify(portees));
+    localStorage.setItem('pcrm_sante',       JSON.stringify(sante));
+    localStorage.setItem('pcrm_ventes',      JSON.stringify(ventes));
+    localStorage.setItem('pcrm_activite',    JSON.stringify(activite));
+    localStorage.setItem('pcrm_aliments',    JSON.stringify(aliments));
+    localStorage.setItem('pcrm_mouvements',  JSON.stringify(mouvements));
+  }catch(e){}
+
+  // 2. Synchronisation Supabase (asynchrone, non bloquant)
+  showSyncStatus('💾 Synchronisation…','info');
+  try{
+    const ups = (table, arr, getId) =>
+      Promise.all(arr.map((item, i) => upsertItem(table, {...item, id: getId(item, i)})));
+
+    await Promise.all([
+      ups(TABLES.users,       users,       u=>u.login),
+      ups(TABLES.porcs,       porcs,       p=>p.id),
+      ups(TABLES.croisements, croisements, (c,i)=>c.id||('CR'+i)),
+      ups(TABLES.portees,     portees,     (p,i)=>p.id||('PT'+i)),
+      ups(TABLES.sante,       sante,       (s,i)=>s.id||('SN'+i)),
+      ups(TABLES.ventes,      ventes,      (v,i)=>v.id||('VT'+i)),
+      ups(TABLES.aliments,    aliments,    a=>a.id),
+      ups(TABLES.mouvements,  mouvements,  m=>m.id),
+      upsertItem(TABLES.activite, {id:'log', log: activite}),
+    ]);
+    showSyncStatus('✅ Données sauvegardées dans Supabase','ok');
+  }catch(e){
+    showSyncStatus('⚠️ Erreur Supabase : '+(e.message||String(e)),'error');
+  }
+}
+
+// Enregistre la fonction de sync Supabase pour que persist() du premier bloc puisse l'appeler
+window._supabasePersist = persistAll;
+window.persist = persistAll; // compatibilité
+
+// ────────────────────────────────────────────────────────
+//  SUPPRESSION en temps réel dans Supabase
+//  On intercepte les opérations delete au niveau des arrays
+// ────────────────────────────────────────────────────────
+// Patch deletePorc — capture l'id AVANT splice puis synchro Supabase
+const _origDeletePorc=window.deletePorc;
+window.deletePorc=function(idx){
+  const porc=porcs[idx];
+  const id=porc?.id;
+  _origDeletePorc&&_origDeletePorc(idx);
+  if(id){
+    deleteItem(TABLES.porcs, id);
+    // Supprimer aussi les mouvements de stock liés (si alimId=id, peu probable mais propre)
+    // Note: les mouvements sont liés aux aliments, pas aux porcs — pas de nettoyage nécessaire ici
+  }
+};
+
+// ────────────────────────────────────────────────────────
+//  CHARGEMENT INITIAL depuis Supabase
+// ────────────────────────────────────────────────────────
+async function initApp(){
+  showSyncStatus('🔄 Chargement des données depuis Supabase…','info');
+
+  // ── Helpers de fusion : Supabase prioritaire, localStorage en fallback ──
+  function mergeData(dbVal, lsKey, defaultVal){
+    if(dbVal && dbVal.length > 0){
+      // Supabase a des données → on met à jour le cache local et on retourne
+      localStorage.setItem(lsKey, JSON.stringify(dbVal));
+      return dbVal;
+    }
+    // Supabase vide ou erreur → on tente le localStorage
+    try{
+      const ls = JSON.parse(localStorage.getItem(lsKey) || 'null');
+      if(ls && ls.length > 0) return ls;
+    }catch(e){}
+    // Rien nulle part → valeur par défaut
+    return defaultVal;
+  }
+
+  try{
+    // Chargements séquentiels pour éviter DataCloneError dans Promise.all
+    const dbUsers      = await loadFromSupabase(TABLES.users);
+    const dbPorcs      = await loadFromSupabase(TABLES.porcs);
+    const dbCrois      = await loadFromSupabase(TABLES.croisements);
+    const dbPortees    = await loadFromSupabase(TABLES.portees);
+    const dbSante      = await loadFromSupabase(TABLES.sante);
+    const dbVentes     = await loadFromSupabase(TABLES.ventes);
+    const dbAlims      = await loadFromSupabase(TABLES.aliments);
+    const dbMvts       = await loadFromSupabase(TABLES.mouvements);
+    const dbActivite   = await loadActivityFromSupabase();
+
+    // ── Users : fusion Supabase → localStorage → bootstrap admin ──
+    users = mergeData(dbUsers, 'pcrm_users', []);
+
+    // Bootstrap admin si aucun user trouvé
+    if(users.length === 0){
+      users=[{nom:'Administrateur',login:'admin',pass:btoa('admin123'),role:'admin',statut:'actif',permissions:PRESETS.admin,createdAt:new Date().toISOString()}];
+      await upsertItem(TABLES.users,{...users[0],id:'admin'});
+      localStorage.setItem('pcrm_users',JSON.stringify(users));
+      console.info('Bootstrap admin créé');
+    }
+
+    // Réinitialisation forcée de l'admin si mot de passe incorrect (ancien hash)
+    const adminUser = users.find(u => u.login === 'admin');
+    if(adminUser && adminUser.pass !== btoa('admin123')){
+      adminUser.pass   = btoa('admin123');
+      adminUser.statut = 'actif';
+      adminUser.role   = 'admin';
+      if(!adminUser.permissions) adminUser.permissions = PRESETS.admin;
+      await upsertItem(TABLES.users, Object.assign({}, adminUser, {id:'admin'}));
+      localStorage.setItem('pcrm_users', JSON.stringify(users));
+      console.info('Mot de passe admin réinitialisé à admin123');
+    }
+
+    // Migration permissions (sans écraser Supabase si rien n'a changé)
+    let changed=false;
+    users.forEach(u=>{
+      if(!u.permissions){u.permissions=PRESETS[u.role]||{};changed=true;return;}
+      const preset=PRESETS[u.role];
+      if(preset){Object.entries(preset).forEach(([mod,acts])=>{if(!u.permissions[mod]){u.permissions[mod]={...acts};changed=true;}});}
+    });
+    if(changed){
+      localStorage.setItem('pcrm_users',JSON.stringify(users));
+      // Ré-synchroniser les users migrés vers Supabase
+      await Promise.all(users.map(u => upsertItem(TABLES.users, {...u, id: u.login})));
+    }
+
+    // ── Autres collections : fusion Supabase → localStorage → tableau vide ──
+    porcs       = mergeData(dbPorcs,    'pcrm_porcs',       []);
+    croisements = mergeData(dbCrois,    'pcrm_croisements', []);
+    portees     = mergeData(dbPortees,  'pcrm_portees',     []);
+    sante       = mergeData(dbSante,    'pcrm_sante',       []);
+    ventes      = mergeData(dbVentes,   'pcrm_ventes',      []);
+    aliments    = mergeData(dbAlims,    'pcrm_aliments',    []);
+    mouvements  = mergeData(dbMvts,     'pcrm_mouvements',  []);
+
+    // Activité (structure différente)
+    if(dbActivite){
+      activite = dbActivite;
+      localStorage.setItem('pcrm_activite', JSON.stringify(activite));
+    } else {
+      try{
+        const ls = JSON.parse(localStorage.getItem('pcrm_activite') || 'null');
+        if(Array.isArray(ls)) activite = ls;
+      }catch(e){}
+    }
+
+    showSyncStatus('✅ Données chargées depuis Supabase','ok');
+  }catch(e){
+    console.warn('Erreur init Supabase, fallback localStorage:', e);
+    showSyncStatus('⚠️ Mode hors-ligne (localStorage)','error');
+    _fallbackLocalStorage();
+  }
+
+  _resumeSession();
+}
+
+function _fallbackLocalStorage(){
+  try{
+    const lu=JSON.parse(localStorage.getItem('pcrm_users')||'null');
+    if(lu&&lu.length>0){
+      users=lu;
+    } else {
+      // Aucun user nulle part → créer admin par défaut
+      users=[{nom:'Administrateur',login:'admin',pass:btoa('admin123'),role:'admin',statut:'actif',permissions:PRESETS.admin,createdAt:new Date().toISOString()}];
+      localStorage.setItem('pcrm_users',JSON.stringify(users));
+    }
+    const lp=JSON.parse(localStorage.getItem('pcrm_porcs')||'[]');      if(lp.length) porcs=lp;
+    const lc=JSON.parse(localStorage.getItem('pcrm_croisements')||'[]');if(lc.length) croisements=lc;
+    const lpt=JSON.parse(localStorage.getItem('pcrm_portees')||'[]');   if(lpt.length) portees=lpt;
+    const ls=JSON.parse(localStorage.getItem('pcrm_sante')||'[]');      if(ls.length) sante=ls;
+    const lv=JSON.parse(localStorage.getItem('pcrm_ventes')||'[]');     if(lv.length) ventes=lv;
+    const la=JSON.parse(localStorage.getItem('pcrm_aliments')||'[]');   if(la.length) aliments=la;
+    const lm=JSON.parse(localStorage.getItem('pcrm_mouvements')||'[]'); if(lm.length) mouvements=lm;
+    const lac=JSON.parse(localStorage.getItem('pcrm_activite')||'[]');  if(lac.length) activite=lac;
+  }catch(fe){ console.warn('Fallback localStorage échoué:', fe); }
+}
+
+function _resumeSession(){
+  const sess=sessionStorage.getItem('pcrm_session');
+  if(sess){
+    const u=users.find(x=>x.login===sess&&x.statut==='actif');
+    if(u){
+      currentUser=u;
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app-shell').classList.add('visible');
+      updateTopbar();applyNavPerms();renderDashboard();
+    }
+  }
+}
+
+// Lancer
+initApp();
+</script>
+</body>
+</html>
